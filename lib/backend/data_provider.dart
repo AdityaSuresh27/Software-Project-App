@@ -65,60 +65,51 @@ class DataProvider extends ChangeNotifier {
   }
 
   // Sign out
-  // Sign out
   Future<void> signOut() async {
     await _apiService.logout(); // Clear token
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isAuthenticated', false);
     await prefs.remove('events');
     await prefs.remove('categories');
-    // Keep old data for migration if needed
+    await prefs.remove('timetable');
+    await prefs.remove('attendance');
+    
     _isAuthenticated = false;
     _events = [];
     _categories = [];
+    _timetableEntries = [];
+    _attendanceRecords = [];
+    
+    // Load local defaults if any, or just clear
+    _initializeDefaultCategories();
+    
     notifyListeners();
   }
 
-  // Load data from SharedPreferences with migration
+  // Load data from SharedPreferences and Backend
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     
-    // Try loading new unified events first
+    // 1. Load Local Data (Cache)
+    _loadLocalData(prefs);
+
+    // 2. Sync from Backend if authenticated
+    if (_isAuthenticated) {
+      await _syncWithBackend();
+    }
+    
+    notifyListeners();
+  }
+
+  void _loadLocalData(SharedPreferences prefs) {
+    // Events
     final eventsJson = prefs.getString('events');
     if (eventsJson != null) {
       final List<dynamic> eventsList = jsonDecode(eventsJson);
       _events = eventsList.map((e) => Event.fromJson(e)).toList();
-    } else {
-      // Migration: Load old events and tasks, convert to new format
-      await _migrateOldData(prefs);
-    }
-
-    // Sync from Backend if authenticated
-    if (_isAuthenticated) {
-      try {
-        final backendTasks = await _apiService.getTasks();
-        // Merge strategy: For MVP, let's just complete refresh (or simple merge logic)
-        // Here we just append backend tasks that are not strictly local-only types
-        // Ideally we should merge based on IDs.
-        
-        // Simple merge: Replace events that have backend IDs? 
-        // Or just set _events to backendTasks for the "Task" view?
-        
-        // Let's create a map of existing events
-        final eventMap = {for (var e in _events) e.id: e};
-        
-        for (var task in backendTasks) {
-           eventMap[task.id] = task;
-        }
-        
-        _events = eventMap.values.toList();
-        _saveData(); // Save synced data locally
-      } catch (e) {
-        debugPrint('Failed to sync tasks: $e');
-      }
     }
     
-    // Load categories
+    // Categories
     final categoriesJson = prefs.getString('categories');
     if (categoriesJson != null) {
       final List<dynamic> categoriesList = jsonDecode(categoriesJson);
@@ -126,123 +117,67 @@ class DataProvider extends ChangeNotifier {
     } else {
       _initializeDefaultCategories();
     }
-    // Load timetable entries
+
+    // Timetable
     final timetableJson = prefs.getString('timetable');
     if (timetableJson != null) {
       final List<dynamic> timetableList = jsonDecode(timetableJson);
       _timetableEntries = timetableList.map((e) => TimetableEntry.fromJson(e)).toList();
     }
 
-    // Load attendance records
+    // Attendance
     final attendanceJson = prefs.getString('attendance');
     if (attendanceJson != null) {
       final List<dynamic> attendanceList = jsonDecode(attendanceJson);
       _attendanceRecords = attendanceList.map((e) => AttendanceRecord.fromJson(e)).toList();
     }
-    notifyListeners();
   }
 
-  // Migrate old Event/Task data to new unified Event system
-  Future<void> _migrateOldData(SharedPreferences prefs) async {
-    final oldEventsJson = prefs.getString('events');
-    final oldTasksJson = prefs.getString('tasks');
-    
-    List<Event> migratedEvents = [];
-    
-    // Migrate old events
-    if (oldEventsJson != null) {
-      try {
-        final List<dynamic> oldEventsList = jsonDecode(oldEventsJson);
-        for (var oldEvent in oldEventsList) {
-          migratedEvents.add(Event(
-            id: oldEvent['id'],
-            title: oldEvent['title'],
-            classification: _mapOldTypeToClassification(oldEvent['type']),
-            category: oldEvent['subject'],
-            startTime: DateTime.parse(oldEvent['startTime']),
-            endTime: DateTime.parse(oldEvent['endTime']),
-            location: oldEvent['location'],
-            notes: oldEvent['notes'],
-            attachments: List<String>.from(oldEvent['attachments'] ?? []),
-            voiceNotes: (oldEvent['voiceNotes'] as List?)
-                ?.map((v) => VoiceNote.fromJson(v))
-                .toList() ?? [],
-            isImportant: oldEvent['isImportant'] ?? false,
-            reminders: (oldEvent['reminders'] as List?)
-                ?.map((r) => DateTime.parse(r as String))
-                .toList() ?? [],
-            priority: 'medium',
-          ));
-        }
-      } catch (e) {
-        debugPrint('Error migrating old events: $e');
+  Future<void> _syncWithBackend() async {
+    try {
+      // Refresh all data from backend
+      final backendTasks = await _apiService.getTasks();
+      final backendEvents = await _apiService.getEvents();
+      final backendTimetable = await _apiService.getTimetable();
+      final backendAttendance = await _apiService.getAttendance();
+      final backendCategories = await _apiService.getCategories();
+
+      // Merge Logic: Backend is source of truth for synced items.
+      // We keep local auto-generated items.
+
+      // 1. Merge Events & Tasks
+      // Create a map of backend events (Tasks + Events)
+      final backendEventMap = {
+        for (var e in backendTasks) e.id: e,
+        for (var e in backendEvents) e.id: e,
+      };
+
+      // Keep local events that are NOT in backend ONLY if they are auto-generated or unsynced (if we had queue)
+      // For now, we replace any event that has a matching ID, and add new ones.
+      // We also need to keep auto-generated events from current local state?
+      // No, we should regenerate them from the synced timetable.
+      
+      // So, _events = BackendEvents + GeneratedEventsFrom(BackendTimetable)
+      
+      _events = backendEventMap.values.toList();
+      _timetableEntries = backendTimetable;
+      _attendanceRecords = backendAttendance;
+      
+      // Update categories if backend has them, else keep local manual ones?
+      // Let's assume backend covers it.
+      if (backendCategories.isNotEmpty) {
+        _categories = backendCategories;
       }
-    }
-    
-    // Migrate old tasks
-    if (oldTasksJson != null) {
-      try {
-        final List<dynamic> oldTasksList = jsonDecode(oldTasksJson);
-        for (var oldTask in oldTasksList) {
-          migratedEvents.add(Event(
-            id: oldTask['id'],
-            title: oldTask['title'],
-            classification: _mapOldTypeToClassification(oldTask['type']),
-            category: oldTask['subject'],
-            startTime: DateTime.parse(oldTask['deadline']),
-            endTime: null,
-            notes: oldTask['notes'],
-            attachments: List<String>.from(oldTask['attachments'] ?? []),
-            voiceNotes: (oldTask['voiceNotes'] as List?)
-                ?.map((v) => VoiceNote.fromJson(v))
-                .toList() ?? [],
-            isCompleted: oldTask['completed'] ?? false,
-            priority: oldTask['priority'] ?? 'medium',
-            estimatedDuration: oldTask['estimatedDuration'],
-            isImportant: oldTask['isImportant'] ?? false,
-            reminders: (oldTask['reminders'] as List?)
-                ?.map((r) => DateTime.parse(r as String))
-                .toList() ?? [],
-          ));
-        }
-      } catch (e) {
-        debugPrint('Error migrating old tasks: $e');
+      
+      // Regenerate timetable events based on new timetable
+      for (var entry in _timetableEntries) {
+        _generateEventsFromTimetable(entry, save: false); // Don't save yet
       }
-    }
-    
-    _events = migratedEvents;
-    if (migratedEvents.isNotEmpty) {
+
       await _saveData();
+    } catch (e) {
+      debugPrint('Failed to sync with backend: $e');
     }
-  }
-
-  String _mapOldTypeToClassification(String oldType) {
-    switch (oldType.toLowerCase()) {
-      case 'lecture':
-        return 'class';
-      case 'lab':
-        return 'class';
-      case 'exam':
-        return 'exam';
-      case 'submission':
-      case 'assignment':
-        return 'assignment';
-      case 'note':
-        return 'other';
-      default:
-        return 'other';
-    }
-  }
-
-  void _initializeDefaultCategories() {
-    _categories = [
-      Category(id: 'general', name: 'General', color: '#8E8E93'),
-      Category(id: 'math', name: 'Mathematics', color: '#4A90E2'),
-      Category(id: 'science', name: 'Science', color: '#6FCFB4'),
-      Category(id: 'language', name: 'Language', color: '#9B72CB'),
-      Category(id: 'social', name: 'Social Studies', color: '#FF8C61'),
-    ];
-    _saveData();
   }
 
   // Save data to SharedPreferences
@@ -262,27 +197,48 @@ class DataProvider extends ChangeNotifier {
     await prefs.setString('attendance', attendanceJson);
   }
 
-  // Event methods
+  void _initializeDefaultCategories() {
+    if (_categories.isEmpty) {
+      _categories = [
+        Category(id: 'general', name: 'General', color: '#8E8E93'),
+        Category(id: 'math', name: 'Mathematics', color: '#4A90E2'),
+        Category(id: 'science', name: 'Science', color: '#6FCFB4'),
+        Category(id: 'language', name: 'Language', color: '#9B72CB'),
+        Category(id: 'social', name: 'Social Studies', color: '#FF8C61'),
+      ];
+      _saveData();
+    }
+  }
+
+  // ==================== EVENT METHODS ====================
+
   Future<void> addEvent(Event event) async {
+    // Optimistic Update
     _events.add(event);
     _scheduleEventNotifications(event);
     _saveData();
     notifyListeners();
 
-    if (_isAuthenticated && event.isTask) {
+    if (_isAuthenticated) {
        try {
-         final createdTask = await _apiService.createTask(event);
-         // Update local ID with backend ID? 
-         // For now, complex ID management might not be needed if we don't strict sync two-way real-time.
-         // But best practice is to update the ID.
+         Event createdEvent;
+         // Check if it should be a Task (Assignment/Exam) or Generic Event
+         if (event.isTask) {
+            createdEvent = await _apiService.createTask(event);
+         } else {
+            createdEvent = await _apiService.createEvent(event);
+         }
          
-         // Remove the temporary local event and add the backend one
-         _events.removeWhere((e) => e.id == event.id);
-         _events.add(createdTask);
-         _saveData();
-         notifyListeners();
+         // Replace local temp event with backend event (updated ID)
+         final index = _events.indexWhere((e) => e.id == event.id);
+         if (index != -1) {
+           _events[index] = createdEvent;
+           _saveData();
+           notifyListeners();
+         }
        } catch (e) {
-         debugPrint('Failed to sync create task: $e');
+         debugPrint('Failed to sync add event: $e');
+         // TODO: Mark as unsynced for later retry
        }
     }
   }
@@ -296,30 +252,51 @@ class DataProvider extends ChangeNotifier {
       _saveData();
       notifyListeners();
 
-      if (_isAuthenticated && event.isTask) {
+      if (_isAuthenticated) {
+        // Skip sync for auto-generated events unless they are being converted to real events?
+        // For now, assume if user edits, we might want to convert (not implemented).
+        if (event.metadata != null && event.metadata!['autoGenerated'] == true) {
+           return; 
+        }
+
         try {
-          await _apiService.updateTask(event);
+          if (event.isTask) {
+            await _apiService.updateTask(event);
+          } else {
+            await _apiService.updateEvent(event);
+          }
         } catch (e) {
-          debugPrint('Failed to sync update task: $e');
+          debugPrint('Failed to sync update event: $e');
         }
       }
     }
   }
 
   Future<void> deleteEvent(String id) async {
-    // Check if it's a task before deleting to know if we should sync
-    final eventToCheck = _events.firstWhere((e) => e.id == id, orElse: () => Event(id: '', title: '', classification: '', startTime: DateTime.now()));
+    final eventToCheck = _events.firstWhere(
+        (e) => e.id == id, 
+        orElse: () => Event(id: '', title: '', classification: '', startTime: DateTime.now())
+    );
     
     _cancelEventNotifications(id);
     _events.removeWhere((e) => e.id == id);
     _saveData();
     notifyListeners();
 
-    if (_isAuthenticated && eventToCheck.isTask && eventToCheck.id.isNotEmpty) {
+    if (_isAuthenticated && eventToCheck.id.isNotEmpty) {
+       // Skip auto-generated
+       if (eventToCheck.metadata != null && eventToCheck.metadata!['autoGenerated'] == true) {
+          return;
+       }
+
        try {
-         await _apiService.deleteTask(id);
+         if (eventToCheck.isTask) {
+           await _apiService.deleteTask(id);
+         } else {
+           await _apiService.deleteEvent(id);
+         }
        } catch (e) {
-          debugPrint('Failed to sync delete task: $e');
+          debugPrint('Failed to sync delete event: $e');
        }
     }
   }
@@ -327,12 +304,242 @@ class DataProvider extends ChangeNotifier {
   void toggleEventComplete(String id) {
     final index = _events.indexWhere((e) => e.id == id);
     if (index != -1) {
-      _events[index].isCompleted = !_events[index].isCompleted;
-      _saveData();
-      notifyListeners();
+      final event = _events[index];
+      event.isCompleted = !event.isCompleted;
+      updateEvent(event); // Handles sync
     }
   }
 
+  // ==================== TIMETABLE METHODS ====================
+
+  Future<void> addTimetableEntry(TimetableEntry entry) async {
+    _timetableEntries.add(entry);
+    _generateEventsFromTimetable(entry);
+    _saveData();
+    notifyListeners();
+
+    if (_isAuthenticated) {
+      try {
+        final createdEntry = await _apiService.createTimetableEntry(entry);
+        // Update local ID
+        final index = _timetableEntries.indexWhere((e) => e.id == entry.id);
+        if (index != -1) {
+          _timetableEntries[index] = createdEntry;
+          // Re-generate events with new ID
+          // First remove old ones
+          _events.removeWhere((e) => e.metadata != null && e.metadata!['timetableEntryId'] == entry.id);
+          _generateEventsFromTimetable(createdEntry);
+          _saveData();
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('Failed to sync add timetable: $e');
+      }
+    }
+  }
+
+  Future<void> updateTimetableEntry(TimetableEntry entry) async {
+    final index = _timetableEntries.indexWhere((e) => e.id == entry.id);
+    if (index != -1) {
+      _timetableEntries[index] = entry;
+      // Regenerate events
+      _events.removeWhere((e) => e.metadata != null && e.metadata!['timetableEntryId'] == entry.id);
+      _generateEventsFromTimetable(entry);
+      
+      _saveData();
+      notifyListeners();
+
+      if (_isAuthenticated) {
+        try {
+          await _apiService.updateTimetableEntry(entry);
+        } catch (e) {
+          debugPrint('Failed to sync update timetable: $e');
+        }
+      }
+    }
+  }
+
+  Future<void> deleteTimetableEntry(String id) async {
+    final index = _timetableEntries.indexWhere((e) => e.id == id);
+    if (index == -1) return;
+    final entry = _timetableEntries[index];
+
+    _timetableEntries.removeAt(index);
+    _events.removeWhere((e) => e.metadata != null && e.metadata!['timetableEntryId'] == id);
+    
+     // Only delete attendance if there are no more classes with this name
+    final hasOtherClasses = _events.any((e) => 
+      e.classification == 'class' && 
+      e.title.toLowerCase() == entry.courseName.toLowerCase()
+    );
+    
+    if (!hasOtherClasses) {
+      // Optional: Ask user before deleting attendance? For now, we keep it locally unsafe or delete safe
+      // Logic from original code:
+       _attendanceRecords.removeWhere((r) => 
+        r.courseName.toLowerCase() == entry.courseName.toLowerCase()
+      );
+    }
+
+    _saveData();
+    notifyListeners();
+
+    if (_isAuthenticated) {
+      try {
+        await _apiService.deleteTimetableEntry(id);
+      } catch (e) {
+        debugPrint('Failed to sync delete timetable: $e');
+      }
+    }
+  }
+
+  void _generateEventsFromTimetable(TimetableEntry entry, {bool save = true}) {
+    // Logic to generate events... (Same as before but ensures they are pushed to _events)
+    final startDate = entry.semesterStart ?? DateTime.now();
+    final endDate = entry.semesterEnd ?? DateTime.now().add(const Duration(days: 180));
+    final now = DateTime.now();
+    var currentDate = startDate.isAfter(now) 
+        ? DateTime(startDate.year, startDate.month, startDate.day)
+        : DateTime(now.year, now.month, now.day);
+    
+    while (currentDate.isBefore(endDate)) {
+      final dayOfWeek = currentDate.weekday;
+      
+      if (entry.daysOfWeek.contains(dayOfWeek)) {
+        final dateStr = currentDate.toIso8601String().split('T')[0];
+        if (!entry.excludedDates.contains(dateStr)) {
+          bool withinSemester = true;
+          if (entry.semesterStart != null && currentDate.isBefore(entry.semesterStart!)) withinSemester = false;
+          if (entry.semesterEnd != null && currentDate.isAfter(entry.semesterEnd!)) withinSemester = false;
+          
+          if (withinSemester) {
+             final startDateTime = DateTime(currentDate.year, currentDate.month, currentDate.day, entry.startTime.hour, entry.startTime.minute);
+             final endDateTime = DateTime(currentDate.year, currentDate.month, currentDate.day, entry.endTime.hour, entry.endTime.minute);
+
+             // Check duplicate
+             final existing = _events.any((e) => 
+               e.metadata != null && e.metadata!['timetableEntryId'] == entry.id &&
+               e.startTime.year == startDateTime.year && e.startTime.month == startDateTime.month && e.startTime.day == startDateTime.day
+             );
+
+             if (!existing) {
+               _events.add(Event(
+                 id: const Uuid().v4(),
+                 title: entry.courseName,
+                 classification: 'class',
+                 category: entry.category,
+                 startTime: startDateTime,
+                 endTime: endDateTime,
+                 location: entry.room,
+                 notes: entry.courseCode != null ? 'Course: ${entry.courseCode}' : null,
+                 metadata: {'timetableEntryId': entry.id, 'autoGenerated': true}
+               ));
+             }
+          }
+        }
+      }
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+    if (save) _saveData();
+  }
+
+
+  // ==================== ATTENDANCE METHODS ====================
+
+  Future<void> markAttendance(AttendanceRecord record) async {
+    final index = _attendanceRecords.indexWhere(
+      (r) => r.courseName.toLowerCase() == record.courseName.toLowerCase() && 
+             r.date.year == record.date.year &&
+             r.date.month == record.date.month &&
+             r.date.day == record.date.day,
+    );
+    
+    if (index != -1) {
+      _attendanceRecords[index] = record;
+    } else {
+      _attendanceRecords.add(record);
+    }
+    
+    _saveData();
+    notifyListeners();
+
+    if (_isAuthenticated) {
+      try {
+        await _apiService.markAttendance(record);
+      } catch (e) {
+        debugPrint('Failed to sync attendance: $e');
+      }
+    }
+  }
+
+  Future<void> deleteAttendanceRecord(String id) async {
+     _attendanceRecords.removeWhere((r) => r.id == id);
+     _saveData();
+     notifyListeners();
+     
+     if (_isAuthenticated) {
+       try {
+         await _apiService.deleteAttendance(id);
+       } catch (e) {
+         debugPrint('Failed to sync delete attendance: $e');
+       }
+     }
+  }
+
+  // ==================== CATEGORY METHODS ====================
+
+  Future<void> addCategory(Category category) async {
+    _categories.add(category);
+    _saveData();
+    notifyListeners();
+
+    if (_isAuthenticated) {
+      try {
+        final created = await _apiService.createCategory(category);
+        final index = _categories.indexWhere((c) => c.id == category.id);
+        if (index != -1) {
+          _categories[index] = created;
+          _saveData();
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('Failed to sync add category: $e');
+      }
+    }
+  }
+
+  Future<void> updateCategory(Category category) async {
+    final index = _categories.indexWhere((c) => c.id == category.id);
+    if (index != -1) {
+      _categories[index] = category;
+      _saveData();
+      notifyListeners();
+
+      if (_isAuthenticated) {
+        try {
+          await _apiService.updateCategory(category);
+        } catch (e) {
+           debugPrint('Failed to sync update category: $e');
+        }
+      }
+    }
+  }
+
+  Future<void> deleteCategory(String id) async {
+    _categories.removeWhere((c) => c.id == id);
+    _saveData();
+    notifyListeners();
+
+    if (_isAuthenticated) {
+      try {
+        await _apiService.deleteCategory(id);
+      } catch (e) {
+        debugPrint('Failed to sync delete category: $e');
+      }
+    }
+  }
+  
+  // Helpers
   List<Event> getEventsForDay(DateTime day) {
     return _events.where((event) {
       return event.startTime.year == day.year &&
@@ -348,121 +555,37 @@ class DataProvider extends ChangeNotifier {
     }).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
-  // Get tasks (events that are task-like)
-  List<Event> get incompleteTasks => _events
-      .where((e) => e.isTask && !e.isCompleted)
-      .toList()
-    ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  List<Event> get incompleteTasks => _events.where((e) => e.isTask && !e.isCompleted).toList();
+  List<Event> get completedTasks => _events.where((e) => e.isTask && e.isCompleted).toList();
+  List<Event> get allTasks => _events.where((e) => e.isTask).toList();
 
-  List<Event> get completedTasks => _events
-      .where((e) => e.isTask && e.isCompleted)
-      .toList()
-    ..sort((a, b) => b.startTime.compareTo(a.startTime));
-
-  List<Event> get allTasks => _events
-      .where((e) => e.isTask)
-      .toList()
-    ..sort((a, b) => a.startTime.compareTo(b.startTime));
-
-  // Get upcoming deadlines
   List<Event> getUpcomingDeadlines({int limit = 10}) {
     final now = DateTime.now();
-    final upcoming = _events
-        .where((e) => e.isTask && !e.isCompleted && e.startTime.isAfter(now))
-        .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
-    return upcoming.take(limit).toList();
+    return _events.where((e) => e.isTask && !e.isCompleted && e.startTime.isAfter(now)).take(limit).toList();
   }
 
-  // Get today's stats
   Map<String, int> getTodayStats() {
     final now = DateTime.now();
     final todayEvents = getEventsForDay(now);
-    
-    int classes = todayEvents.where((e) => e.classification == 'class').length;
-    int exams = todayEvents.where((e) => e.classification == 'exam').length;
-    int assignments = todayEvents.where((e) => 
-        e.classification == 'assignment' && !e.isCompleted).length;
-    int meetings = todayEvents.where((e) => e.classification == 'meeting').length;
-    
     return {
-      'classes': classes,
-      'exams': exams,
-      'assignments': assignments,
-      'meetings': meetings,
+      'classes': todayEvents.where((e) => e.classification == 'class').length,
+      'exams': todayEvents.where((e) => e.classification == 'exam').length,
+      'assignments': todayEvents.where((e) => e.classification == 'assignment' && !e.isCompleted).length,
+      'meetings': todayEvents.where((e) => e.classification == 'meeting').length,
     };
   }
-
-  // Voice note methods
-  void addVoiceNoteToEvent(String eventId, VoiceNote voiceNote) {
-    final event = _events.firstWhere((e) => e.id == eventId);
-    event.voiceNotes = [...event.voiceNotes, voiceNote];
-    updateEvent(event);
-  }
-
-  // Category methods
-  void addCategory(Category category) {
-    _categories.add(category);
-    _saveData();
-    notifyListeners();
-  }
-
-  void updateCategory(Category category) {
-    final index = _categories.indexWhere((c) => c.id == category.id);
-    if (index != -1) {
-      _categories[index] = category;
-      _saveData();
-      notifyListeners();
-    }
-  }
-
-  void deleteCategory(String id) {
-    _categories.removeWhere((c) => c.id == id);
-    // Update events that used this category
-    for (var event in _events) {
-      if (event.category == id) {
-        event.category = null;
-      }
-    }
-    _saveData();
-    notifyListeners();
-  }
-
-  Category? getCategoryById(String? id) {
-    if (id == null) return null;
-    try {
-      return _categories.firstWhere((c) => c.id == id);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Filter events by classification
-  List<Event> getEventsByClassification(String classification) {
-    return _events
-        .where((e) => e.classification == classification)
-        .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
-  }
-
-  // Filter events by category
-  List<Event> getEventsByCategory(String categoryId) {
-    return _events
-        .where((e) => e.category == categoryId)
-        .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
-  }
-
+  
+  Category? getCategoryById(String? id) => id == null ? null : _categories.firstWhere((c) => c.id == id, orElse: () => Category(id: 'unknown', name: 'Unknown'));
+  
   // Count events for a day (for calendar preview)
   Map<String, int> getCountsForDay(DateTime day) {
     final events = getEventsForDay(day);
-    
     return {
       'events': events.where((e) => !e.isTask).length,
       'tasks': events.where((e) => e.isTask && !e.isCompleted).length,
     };
   }
-  // Notification scheduling helpers
+
   void _scheduleEventNotifications(Event event) {
     final notificationService = NotificationService();
     
@@ -479,355 +602,30 @@ class DataProvider extends ChangeNotifier {
       }
     }
   }
-
   void _cancelEventNotifications(String eventId) {
     final notificationService = NotificationService();
-    final event = _events.firstWhere((e) => e.id == eventId, orElse: () => _events.first);
-    
-    for (int i = 0; i < event.reminders.length; i++) {
-      final notificationId = eventId.hashCode + i;
-      notificationService.cancelNotification(notificationId);
-    }
-  }
-  // ==================== TIMETABLE METHODS ====================
-
-void addTimetableEntry(TimetableEntry entry) {
-  _timetableEntries.add(entry);
-  _saveData();
-  notifyListeners();
-  // Auto-generate events for the next 30 days
-  _generateEventsFromTimetable(entry);
-}
-
-void updateTimetableEntry(TimetableEntry entry) {
-  final index = _timetableEntries.indexWhere((e) => e.id == entry.id);
-  if (index != -1) {
-    _timetableEntries[index] = entry;
-    
-    // Remove old auto-generated events for this timetable entry
-    _events.removeWhere((e) => 
-      e.metadata != null && 
-      e.metadata!['timetableEntryId'] == entry.id
-    );
-    
-    // Regenerate events
-    _generateEventsFromTimetable(entry);
-    
-    _saveData();
-    notifyListeners();
-  }
-}
-
-void deleteTimetableEntry(String id) {
-  // Get the course name before deleting
-  final entry = _timetableEntries.firstWhere((e) => e.id == id);
-  final courseName = entry.courseName;
-  
-  _timetableEntries.removeWhere((e) => e.id == id);
-  
-  // Remove auto-generated events for this timetable entry
-  _events.removeWhere((e) => 
-    e.metadata != null && 
-    e.metadata!['timetableEntryId'] == id
-  );
-  
-  // Only delete attendance if there are no more classes with this name
-  final hasOtherClasses = _events.any((e) => 
-    e.classification == 'class' && 
-    e.title.toLowerCase() == courseName.toLowerCase()
-  );
-  
-  if (!hasOtherClasses) {
-    _attendanceRecords.removeWhere((r) => 
-      r.courseName.toLowerCase() == courseName.toLowerCase()
-    );
-  }
-  
-  _saveData();
-  notifyListeners();
-}
-
-void _generateEventsFromTimetable(TimetableEntry entry) {
-  // Use the entry's date range
-  final startDate = entry.semesterStart ?? DateTime.now();
-  final endDate = entry.semesterEnd ?? DateTime.now().add(const Duration(days: 180));
-  
-  final now = DateTime.now();
-  var currentDate = startDate.isAfter(now) 
-      ? DateTime(startDate.year, startDate.month, startDate.day)
-      : DateTime(now.year, now.month, now.day);
-  
-  while (currentDate.isBefore(endDate)) {
-    final dayOfWeek = currentDate.weekday; // 1=Monday, 7=Sunday
-    
-    // Check if this day is included in the timetable
-    if (entry.daysOfWeek.contains(dayOfWeek)) {
-      // Check if this date is excluded
-      final dateStr = currentDate.toIso8601String().split('T')[0];
-      if (!entry.excludedDates.contains(dateStr)) {
-        // Check semester dates
-        bool withinSemester = true;
-        if (entry.semesterStart != null && currentDate.isBefore(entry.semesterStart!)) {
-          withinSemester = false;
-        }
-        if (entry.semesterEnd != null && currentDate.isAfter(entry.semesterEnd!)) {
-          withinSemester = false;
-        }
-        
-        if (withinSemester) {
-          // Create event for this day
-          final startDateTime = DateTime(
-            currentDate.year,
-            currentDate.month,
-            currentDate.day,
-            entry.startTime.hour,
-            entry.startTime.minute,
-          );
-          
-          final endDateTime = DateTime(
-            currentDate.year,
-            currentDate.month,
-            currentDate.day,
-            entry.endTime.hour,
-            entry.endTime.minute,
-          );
-          
-          // Check if event already exists (avoid duplicates)
-          final existingEvent = _events.firstWhere(
-            (e) => 
-              e.metadata != null &&
-              e.metadata!['timetableEntryId'] == entry.id &&
-              e.startTime.year == startDateTime.year &&
-              e.startTime.month == startDateTime.month &&
-              e.startTime.day == startDateTime.day,
-            orElse: () => Event(
-              id: '',
-              title: '',
-              classification: 'class',
-              startTime: DateTime.now(),
-            ),
-          );
-          
-          if (existingEvent.id.isEmpty) {
-            final event = Event(
-              id: const Uuid().v4(),
-              title: entry.courseName,
-              classification: 'class',
-              category: entry.category,
-              startTime: startDateTime,
-              endTime: endDateTime,
-              location: entry.room,
-              notes: entry.courseCode != null 
-                ? 'Course: ${entry.courseCode}\nInstructor: ${entry.instructor ?? 'N/A'}'
-                : (entry.instructor != null ? 'Instructor: ${entry.instructor}' : null),
-              priority: 'medium',
-              metadata: {
-                'timetableEntryId': entry.id,
-                'autoGenerated': true,
-              },
-            );
-            
-            _events.add(event);
-          }
-        }
+    try {
+      final event = _events.firstWhere((e) => e.id == eventId);
+      for (int i = 0; i < event.reminders.length; i++) {
+        final notificationId = eventId.hashCode + i;
+        notificationService.cancelNotification(notificationId);
       }
-    }
-    
-    // Move to next day
-    currentDate = currentDate.add(const Duration(days: 1));
-  }
-  
-  _saveData();
-}
-
-List<TimetableEntry> getTimetableForDay(int dayOfWeek) {
-  return _timetableEntries
-      .where((entry) => entry.daysOfWeek.contains(dayOfWeek))
-      .toList()
-    ..sort((a, b) {
-      final aMinutes = a.startTime.hour * 60 + a.startTime.minute;
-      final bMinutes = b.startTime.hour * 60 + b.startTime.minute;
-      return aMinutes.compareTo(bMinutes);
-    });
-}
-
-List<TimetableEntry> getTimetableForDate(DateTime date) {
-  final dayOfWeek = date.weekday; // 1=Monday, 7=Sunday
-  final dateStr = date.toIso8601String().split('T')[0];
-  
-  return _timetableEntries.where((entry) {
-    // Check if this day is included
-    if (!entry.daysOfWeek.contains(dayOfWeek)) return false;
-    
-    // Check if date is excluded
-    if (entry.excludedDates.contains(dateStr)) return false;
-    
-    // Check semester dates
-    if (entry.semesterStart != null && date.isBefore(entry.semesterStart!)) {
-      return false;
-    }
-    if (entry.semesterEnd != null && date.isAfter(entry.semesterEnd!)) {
-      return false;
-    }
-    
-    return true;
-  }).toList()
-    ..sort((a, b) {
-      final aMinutes = a.startTime.hour * 60 + a.startTime.minute;
-      final bMinutes = b.startTime.hour * 60 + b.startTime.minute;
-      return aMinutes.compareTo(bMinutes);
-    });
-}
-
-// ==================== ATTENDANCE METHODS ====================
-
-void markAttendance(AttendanceRecord record) {
-  final index = _attendanceRecords.indexWhere(
-    (r) => r.courseName.toLowerCase() == record.courseName.toLowerCase() && 
-           r.date.year == record.date.year &&
-           r.date.month == record.date.month &&
-           r.date.day == record.date.day,
-  );
-  
-  if (index != -1) {
-    _attendanceRecords[index] = record;
-  } else {
-    _attendanceRecords.add(record);
-  }
-  
-  _saveData();
-  notifyListeners();
-}
-
-AttendanceRecord? getAttendanceForDate(String courseName, DateTime date) {
-  try {
-    return _attendanceRecords.firstWhere(
-      (r) => r.courseName.toLowerCase() == courseName.toLowerCase() &&
-             r.date.year == date.year &&
-             r.date.month == date.month &&
-             r.date.day == date.day,
-    );
-  } catch (e) {
-    return null;
-  }
-}
-
-List<AttendanceRecord> getAttendanceForCourse(String courseName) {
-  return _attendanceRecords
-      .where((r) => r.courseName.toLowerCase() == courseName.toLowerCase())
-      .toList()
-    ..sort((a, b) => b.date.compareTo(a.date));
-}
-
-AttendanceStats getAttendanceStats(String courseName) {
-  final records = getAttendanceForCourse(courseName);
-  
-  int present = 0;
-  int absent = 0;
-  int late = 0;
-  int excused = 0;
-  int cancelled = 0; // Classes that were cancelled
-  
-  for (var record in records) {
-    switch (record.status) {
-      case AttendanceStatus.present:
-        present++;
-        break;
-      case AttendanceStatus.absent:
-        absent++;
-        break;
-      case AttendanceStatus.late:
-        late++;
-        break;
-      case AttendanceStatus.excused:
-        excused++;
-        break;
-      case AttendanceStatus.cancelled:
-        cancelled++;
-        break;
+    } catch (e) {
+      // Event might already be gone or not found
     }
   }
   
-  // Don't count cancelled classes in total
-  final totalClasses = records.length - cancelled;
-  
-  return AttendanceStats(
-    totalClasses: totalClasses,
-    present: present,
-    absent: absent,
-    late: late,
-    excused: excused,
-  );
-}
-
-Map<String, AttendanceStats> getAllAttendanceStats() {
-  final stats = <String, AttendanceStats>{};
-  
-  // Get unique course names from both timetable and events
-  final courseNames = <String>{};
-  
-  // From timetable
-  for (var entry in _timetableEntries) {
-    courseNames.add(entry.courseName);
-  }
-  
-  // From class events
-  for (var event in _events) {
-    if (event.classification == 'class') {
-      courseNames.add(event.title);
+  // Re-implement simplified helpers to match original file structure if needed
+  AttendanceRecord? getAttendanceForDate(String courseName, DateTime date) {
+    try {
+      return _attendanceRecords.firstWhere(
+        (r) => r.courseName.toLowerCase() == courseName.toLowerCase() &&
+               r.date.year == date.year &&
+               r.date.month == date.month &&
+               r.date.day == date.day,
+      );
+    } catch (e) {
+      return null;
     }
   }
-  
-  // Calculate stats for each course
-  for (var courseName in courseNames) {
-    stats[courseName] = getAttendanceStats(courseName);
-  }
-  
-  return stats;
-}
-
-// Get all class events for a specific course name
-List<Event> getClassEventsForCourse(String courseName) {
-  return _events
-      .where((e) => 
-        e.classification == 'class' && 
-        e.title.toLowerCase() == courseName.toLowerCase())
-      .toList()
-    ..sort((a, b) => a.startTime.compareTo(b.startTime));
-}
-
-// Reset timetable and attendance completely
-Future<void> resetTimetableAndAttendance() async {
-  _timetableEntries.clear();
-  _attendanceRecords.clear();
-  
-  // Remove ALL class events (both auto-generated AND manual)
-  _events.removeWhere((e) => e.classification == 'class');
-  
-  await _saveData();
-  notifyListeners();
-}
-
-// Reset attendance only
-Future<void> resetAttendance() async {
-  _attendanceRecords.clear();
-  await _saveData();
-  notifyListeners();
-}
-
-// Delete specific attendance record
-void deleteAttendanceRecord(String id) {
-  _attendanceRecords.removeWhere((r) => r.id == id);
-  _saveData();
-  notifyListeners();
-}
-
-// Clear all attendance for a specific course
-void clearAttendanceForCourse(String courseName) {
-  _attendanceRecords.removeWhere((r) => 
-    r.courseName.toLowerCase() == courseName.toLowerCase()
-  );
-  _saveData();
-  notifyListeners();
-}
 }

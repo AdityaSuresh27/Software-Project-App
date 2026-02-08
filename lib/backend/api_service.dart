@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 import 'models.dart';
+import 'timetable_models.dart';
 
 class ApiService {
   // Replace with your local IP if testing on physical device (e.g., 192.168.1.5:5000)
@@ -63,7 +65,7 @@ class ApiService {
     await prefs.remove('auth_token');
   }
 
-  // ================= TASKS =================
+  // ================= TASKS (Assignments/Exams) =================
 
   Future<List<Event>> getTasks() async {
     final response = await http.get(
@@ -73,7 +75,6 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      // Map Backend Task -> Mobile Event
       return data.map((json) => _mapBackendTaskToEvent(json)).toList();
     } else {
       throw Exception('Failed to load tasks');
@@ -96,10 +97,6 @@ class ApiService {
   }
 
   Future<Event> updateTask(Event event) async {
-    // Assuming backend uses 24-char ObjectID, but mobile uses UUID.
-    // For now, we only sync if the ID matches backend format or we handle mapping explicitly.
-    // This is a simplification. Real sync needs ID mapping.
-    
     final response = await http.put(
       Uri.parse('$baseUrl/tasks/${event.id}'),
       headers: await _headers,
@@ -125,11 +122,225 @@ class ApiService {
     }
   }
 
+  // ================= EVENTS (Classes/Meetings/Labs) =================
+
+  Future<List<Event>> getEvents() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/events'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => _mapBackendEventToEvent(json)).toList();
+    } else {
+      throw Exception('Failed to load events');
+    }
+  }
+
+  Future<Event> createEvent(Event event) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/events'),
+      headers: await _headers,
+      body: jsonEncode(_mapEventToBackendEvent(event)),
+    );
+
+    if (response.statusCode == 201) {
+      final json = jsonDecode(response.body);
+      return _mapBackendEventToEvent(json);
+    } else {
+      throw Exception('Failed to create event');
+    }
+  }
+
+  Future<Event> updateEvent(Event event) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/events/${event.id}'),
+      headers: await _headers,
+      body: jsonEncode(_mapEventToBackendEvent(event)),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return _mapBackendEventToEvent(json);
+    } else {
+      throw Exception('Failed to update event');
+    }
+  }
+
+  Future<void> deleteEvent(String id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/events/$id'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete event');
+    }
+  }
+
+  // ================= TIMETABLE =================
+
+  Future<List<TimetableEntry>> getTimetable() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/timetable'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => _mapBackendTimetableToEntry(json)).toList();
+    } else {
+      throw Exception('Failed to load timetable');
+    }
+  }
+
+  Future<TimetableEntry> createTimetableEntry(TimetableEntry entry) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/timetable'),
+      headers: await _headers,
+      body: jsonEncode(_mapEntryToBackendTimetable(entry)),
+    );
+
+    if (response.statusCode == 201) {
+      final json = jsonDecode(response.body);
+      return _mapBackendTimetableToEntry(json);
+    } else {
+      throw Exception('Failed to create timetable entry');
+    }
+  }
+
+  Future<TimetableEntry> updateTimetableEntry(TimetableEntry entry) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/timetable/${entry.id}'),
+      headers: await _headers,
+      body: jsonEncode(_mapEntryToBackendTimetable(entry)),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return _mapBackendTimetableToEntry(json);
+    } else {
+      throw Exception('Failed to update timetable entry');
+    }
+  }
+
+  Future<void> deleteTimetableEntry(String id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/timetable/$id'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete timetable entry');
+    }
+  }
+
+  // ================= ATTENDANCE =================
+
+  Future<List<AttendanceRecord>> getAttendance() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/attendance'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => _mapBackendAttendanceToRecord(json)).toList();
+    } else {
+      throw Exception('Failed to load attendance');
+    }
+  }
+
+  Future<AttendanceRecord> markAttendance(AttendanceRecord record) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/attendance'),
+      headers: await _headers,
+      body: jsonEncode(_mapRecordToBackendAttendance(record)),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return _mapBackendAttendanceToRecord(json);
+    } else {
+      throw Exception('Failed to mark attendance');
+    }
+  }
+
+  Future<void> deleteAttendance(String id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/attendance/$id'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete attendance');
+    }
+  }
+
+  // ================= CATEGORIES =================
+
+  Future<List<Category>> getCategories() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/categories'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => _mapBackendCategoryToCategory(json)).toList();
+    } else {
+      throw Exception('Failed to load categories');
+    }
+  }
+
+  Future<Category> createCategory(Category category) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/categories'),
+      headers: await _headers,
+      body: jsonEncode(_mapCategoryToBackendCategory(category)),
+    );
+
+    if (response.statusCode == 201) {
+      final json = jsonDecode(response.body);
+      return _mapBackendCategoryToCategory(json);
+    } else {
+      throw Exception('Failed to create category');
+    }
+  }
+
+  Future<Category> updateCategory(Category category) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/categories/${category.id}'),
+      headers: await _headers,
+      body: jsonEncode(_mapCategoryToBackendCategory(category)),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return _mapBackendCategoryToCategory(json);
+    } else {
+      throw Exception('Failed to update category');
+    }
+  }
+
+  Future<void> deleteCategory(String id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/categories/$id'),
+      headers: await _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete category');
+    }
+  }
+
   // ================= MAPPERS =================
-  // Convert Backend Task JSON -> Mobile Event Object
+
+  // TASK Mappers (Legacy)
   Event _mapBackendTaskToEvent(Map<String, dynamic> json) {
     return Event(
-      id: json['_id'], // Backend ID
+      id: json['_id'],
       title: json['title'],
       classification: _mapTypeToClassification(json['type']), 
       startTime: DateTime.parse(json['deadline'] ?? json['startTime'] ?? DateTime.now().toIso8601String()), 
@@ -139,22 +350,16 @@ class ApiService {
       estimatedDuration: json['estimatedDuration']?.toString(),
       isImportant: json['importance'] ?? false,
       notes: json['description'],
-      // Defaults for fields missing in backend
       category: 'General', 
-      location: null,
-      attachments: [],
-      voiceNotes: [],
-      reminders: [],
     );
   }
 
-  // Convert Mobile Event Object -> Backend Task JSON
   Map<String, dynamic> _mapEventToBackendTask(Event event) {
     return {
       'title': event.title,
       'description': event.notes ?? '',
       'type': _mapClassificationToType(event.classification),
-      'deadline': event.startTime.toIso8601String(), // Using startTime as deadline for now
+      'deadline': event.startTime.toIso8601String(),
       'isCompleted': event.isCompleted,
       'priority': event.priority,
       'estimatedDuration': int.tryParse(event.estimatedDuration ?? '0') ?? 0,
@@ -162,6 +367,131 @@ class ApiService {
     };
   }
 
+  // EVENT Mappers
+  Event _mapBackendEventToEvent(Map<String, dynamic> json) {
+    return Event(
+      id: json['_id'],
+      title: json['title'],
+      classification: json['classification'],
+      category: json['category'],
+      startTime: DateTime.parse(json['startTime']),
+      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
+      location: json['location'],
+      notes: json['notes'],
+      attachments: List<String>.from(json['attachments'] ?? []),
+      // VoiceNotes mapping depends on structure, assuming simplified for now
+      isCompleted: json['isCompleted'] ?? false,
+      completionColor: json['completionColor'],
+      priority: json['priority'] ?? 'medium',
+      estimatedDuration: json['estimatedDuration'],
+      isImportant: json['isImportant'] ?? false,
+      color: json['color'],
+    );
+  }
+
+  Map<String, dynamic> _mapEventToBackendEvent(Event event) {
+    return {
+      'title': event.title,
+      'classification': event.classification,
+      'category': event.category,
+      'startTime': event.startTime.toIso8601String(),
+      'endTime': event.endTime?.toIso8601String(),
+      'location': event.location,
+      'notes': event.notes,
+      'attachments': event.attachments,
+      'isCompleted': event.isCompleted,
+      'completionColor': event.completionColor,
+      'priority': event.priority,
+      'estimatedDuration': event.estimatedDuration,
+      'isImportant': event.isImportant,
+      'color': event.color,
+    };
+  }
+
+  // TIMETABLE Mappers
+  TimetableEntry _mapBackendTimetableToEntry(Map<String, dynamic> json) {
+    return TimetableEntry(
+      id: json['_id'],
+      courseName: json['courseName'],
+      courseCode: json['courseCode'],
+      instructor: json['instructor'],
+      room: json['room'],
+      daysOfWeek: List<int>.from(json['daysOfWeek']),
+      startTime: TimeOfDay(
+        hour: json['startTime']['hour'],
+        minute: json['startTime']['minute'],
+      ),
+      endTime: TimeOfDay(
+        hour: json['endTime']['hour'],
+        minute: json['endTime']['minute'],
+      ),
+      category: json['category'],
+      color: json['color'],
+      semesterStart: json['semesterStart'] != null ? DateTime.parse(json['semesterStart']) : null,
+      semesterEnd: json['semesterEnd'] != null ? DateTime.parse(json['semesterEnd']) : null,
+      excludedDates: List<String>.from(json['excludedDates'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> _mapEntryToBackendTimetable(TimetableEntry entry) {
+    return {
+      'courseName': entry.courseName,
+      'courseCode': entry.courseCode,
+      'instructor': entry.instructor,
+      'room': entry.room,
+      'daysOfWeek': entry.daysOfWeek,
+      'startTime': {'hour': entry.startTime.hour, 'minute': entry.startTime.minute},
+      'endTime': {'hour': entry.endTime.hour, 'minute': entry.endTime.minute},
+      'category': entry.category,
+      'color': entry.color,
+      'semesterStart': entry.semesterStart?.toIso8601String(),
+      'semesterEnd': entry.semesterEnd?.toIso8601String(),
+      'excludedDates': entry.excludedDates,
+    };
+  }
+
+  // ATTENDANCE Mappers
+  AttendanceRecord _mapBackendAttendanceToRecord(Map<String, dynamic> json) {
+    return AttendanceRecord(
+      id: json['_id'],
+      courseName: json['courseName'],
+      date: DateTime.parse(json['date']),
+      status: AttendanceStatus.values.firstWhere(
+        (e) => e.toString().split('.').last == json['status'],
+        orElse: () => AttendanceStatus.present,
+      ),
+      notes: json['notes'],
+    );
+  }
+
+  Map<String, dynamic> _mapRecordToBackendAttendance(AttendanceRecord record) {
+    return {
+      'courseName': record.courseName,
+      'date': record.date.toIso8601String(),
+      'status': record.status.toString().split('.').last,
+      'notes': record.notes,
+    };
+  }
+
+  // CATEGORY Mappers
+  Category _mapBackendCategoryToCategory(Map<String, dynamic> json) {
+    return Category(
+      id: json['_id'],
+      name: json['name'],
+      color: json['color'],
+      icon: json['icon'],
+    );
+  }
+
+  Map<String, dynamic> _mapCategoryToBackendCategory(Category category) {
+    return {
+      'name': category.name,
+      'color': category.color,
+      'icon': category.icon,
+    };
+  }
+
+  // Helpers
   String _mapTypeToClassification(String? type) {
     switch (type) {
       case 'exam': return 'exam';

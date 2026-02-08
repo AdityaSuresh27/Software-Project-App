@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'onboarding_screen.dart';
+import '../backend/notification_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,6 +19,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    // Initialize notifications effectively in the background
+    NotificationService().initialize();
+    
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
