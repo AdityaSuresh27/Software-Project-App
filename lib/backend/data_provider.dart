@@ -5,9 +5,11 @@ import 'dart:convert';
 import 'models.dart';
 import 'notification_service.dart';
 import 'timetable_models.dart';
+import 'api_service.dart'; // Import ApiService
 import 'package:uuid/uuid.dart';
 
 class DataProvider extends ChangeNotifier {
+  final ApiService _apiService = ApiService(); // Initialize ApiService
   List<Event> _events = [];
   List<Category> _categories = [];
   bool _isAuthenticated = false;
@@ -33,15 +35,39 @@ class DataProvider extends ChangeNotifier {
   }
 
   // Sign in
-  Future<void> signIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isAuthenticated', true);
-    _isAuthenticated = true;
-    notifyListeners();
+  Future<void> signIn(String email, String password) async {
+    try {
+      await _apiService.login(email, password);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isAuthenticated', true);
+      _isAuthenticated = true;
+      
+      // Load data from backend after login
+      await _loadData();
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Login error: $e');
+      rethrow; // Re-throw to handle in UI
+    }
+  }
+
+  // Sign up
+  Future<void> signUp(String name, String email, String password) async {
+    try {
+      await _apiService.register(name, email, password);
+      // Auto login after registration
+      await signIn(email, password);
+    } catch (e) {
+      debugPrint('Registration error: $e');
+      rethrow;
+    }
   }
 
   // Sign out
+  // Sign out
   Future<void> signOut() async {
+    await _apiService.logout(); // Clear token
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isAuthenticated', false);
     await prefs.remove('events');
@@ -65,6 +91,31 @@ class DataProvider extends ChangeNotifier {
     } else {
       // Migration: Load old events and tasks, convert to new format
       await _migrateOldData(prefs);
+    }
+
+    // Sync from Backend if authenticated
+    if (_isAuthenticated) {
+      try {
+        final backendTasks = await _apiService.getTasks();
+        // Merge strategy: For MVP, let's just complete refresh (or simple merge logic)
+        // Here we just append backend tasks that are not strictly local-only types
+        // Ideally we should merge based on IDs.
+        
+        // Simple merge: Replace events that have backend IDs? 
+        // Or just set _events to backendTasks for the "Task" view?
+        
+        // Let's create a map of existing events
+        final eventMap = {for (var e in _events) e.id: e};
+        
+        for (var task in backendTasks) {
+           eventMap[task.id] = task;
+        }
+        
+        _events = eventMap.values.toList();
+        _saveData(); // Save synced data locally
+      } catch (e) {
+        debugPrint('Failed to sync tasks: $e');
+      }
     }
     
     // Load categories
@@ -212,14 +263,31 @@ class DataProvider extends ChangeNotifier {
   }
 
   // Event methods
-  void addEvent(Event event) {
+  Future<void> addEvent(Event event) async {
     _events.add(event);
     _scheduleEventNotifications(event);
     _saveData();
     notifyListeners();
+
+    if (_isAuthenticated && event.isTask) {
+       try {
+         final createdTask = await _apiService.createTask(event);
+         // Update local ID with backend ID? 
+         // For now, complex ID management might not be needed if we don't strict sync two-way real-time.
+         // But best practice is to update the ID.
+         
+         // Remove the temporary local event and add the backend one
+         _events.removeWhere((e) => e.id == event.id);
+         _events.add(createdTask);
+         _saveData();
+         notifyListeners();
+       } catch (e) {
+         debugPrint('Failed to sync create task: $e');
+       }
+    }
   }
 
-  void updateEvent(Event event) {
+  Future<void> updateEvent(Event event) async {
     final index = _events.indexWhere((e) => e.id == event.id);
     if (index != -1) {
       _cancelEventNotifications(event.id);
@@ -227,14 +295,33 @@ class DataProvider extends ChangeNotifier {
       _scheduleEventNotifications(event);
       _saveData();
       notifyListeners();
+
+      if (_isAuthenticated && event.isTask) {
+        try {
+          await _apiService.updateTask(event);
+        } catch (e) {
+          debugPrint('Failed to sync update task: $e');
+        }
+      }
     }
   }
 
-  void deleteEvent(String id) {
+  Future<void> deleteEvent(String id) async {
+    // Check if it's a task before deleting to know if we should sync
+    final eventToCheck = _events.firstWhere((e) => e.id == id, orElse: () => Event(id: '', title: '', classification: '', startTime: DateTime.now()));
+    
     _cancelEventNotifications(id);
     _events.removeWhere((e) => e.id == id);
     _saveData();
     notifyListeners();
+
+    if (_isAuthenticated && eventToCheck.isTask && eventToCheck.id.isNotEmpty) {
+       try {
+         await _apiService.deleteTask(id);
+       } catch (e) {
+          debugPrint('Failed to sync delete task: $e');
+       }
+    }
   }
 
   void toggleEventComplete(String id) {

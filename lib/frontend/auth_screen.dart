@@ -80,7 +80,31 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       
       if (mounted) {
         final dataProvider = Provider.of<DataProvider>(context, listen: false);
-        await dataProvider.signIn();
+        try {
+          if (_isLogin) {
+            await dataProvider.signIn(
+              _emailController.text.trim(),
+              _passwordController.text,
+            );
+          } else {
+            await dataProvider.signUp(
+              _nameController.text.trim(),
+              _emailController.text.trim(),
+              _passwordController.text,
+            );
+          }
+        } catch (e) {
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(
+                 content: Text('Authentication failed: ${e.toString().replaceAll("Exception:", "")}'),
+                 backgroundColor: Theme.of(context).colorScheme.error,
+               ),
+             );
+             setState(() => _isLoading = false);
+             return;
+           }
+        }
         
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
