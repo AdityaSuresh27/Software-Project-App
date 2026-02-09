@@ -73,11 +73,36 @@ class _TimelinePageState extends State<TimelinePage> {
         
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              isToday 
-                  ? 'Timeline - Today'
-                  : 'Timeline - ${DateFormat('MMM dd').format(_selectedDate)}',
-            ),
+  title: Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppTheme.meetingTeal.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.timeline_rounded,
+          color: AppTheme.meetingTeal,
+          size: 22,
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Text(
+          isToday 
+              ? 'Timeline - Today'
+              : 'Timeline - ${DateFormat('MMM dd').format(_selectedDate)}',
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ],
+  ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.calendar_today_outlined),

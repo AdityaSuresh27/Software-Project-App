@@ -368,21 +368,24 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
                       const SizedBox(height: 16),
 
                       // Period duration
-                      DropdownButtonFormField<int>(
-                        value: _periodDurationMinutes,
-                        decoration: _buildInputDecoration('Period Duration', Icons.timer_outlined),
-                        items: _durationOptions.map((minutes) {
-                          return DropdownMenuItem(
-                            value: minutes,
-                            child: Text(_formatDuration(minutes)),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _periodDurationMinutes = value!;
-                          });
-                        },
-                      ),
+DropdownButtonFormField<int>(
+  value: _periodDurationMinutes,
+  decoration: _buildInputDecoration('Period Duration', Icons.timer_outlined),
+  dropdownColor: Theme.of(context).cardColor,
+  borderRadius: BorderRadius.circular(12),
+  icon: Icon(Icons.arrow_drop_down_rounded, color: _selectedColor, size: 28),
+  items: _durationOptions.map((minutes) {
+    return DropdownMenuItem(
+      value: minutes,
+      child: Text(_formatDuration(minutes)),
+    );
+  }).toList(),
+  onChanged: (value) {
+    setState(() {
+      _periodDurationMinutes = value!;
+    });
+  },
+),
                       const SizedBox(height: 16),
 
                       // Calculated end time (display only)
@@ -414,20 +417,38 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
                       const SizedBox(height: 20),
 
                       // Category
-                      DropdownButtonFormField<String?>(
-                        value: _selectedCategory,
-                        decoration: _buildInputDecoration('Category (Optional)', Icons.folder_outlined),
-                        items: [
-                          const DropdownMenuItem<String?>(value: null, child: Text('No category')),
-                          ...dataProvider.categories.map((category) {
-                            return DropdownMenuItem<String>(
-                              value: category.id,
-                              child: Text(category.name),
-                            );
-                          }),
-                        ],
-                        onChanged: (value) => setState(() => _selectedCategory = value),
-                      ),
+DropdownButtonFormField<String?>(
+  value: _selectedCategory,
+  decoration: _buildInputDecoration('Category (Optional)', Icons.folder_outlined),
+  dropdownColor: Theme.of(context).cardColor,
+  borderRadius: BorderRadius.circular(12),
+  icon: Icon(Icons.arrow_drop_down_rounded, color: _selectedColor, size: 28),
+  items: [
+    DropdownMenuItem<String?>(
+      value: null, 
+      child: Row(
+        children: [
+          Icon(Icons.block, size: 18, color: AppTheme.otherGray),
+          const SizedBox(width: 12),
+          const Text('No category'),
+        ],
+      ),
+    ),
+    ...dataProvider.categories.map((category) {
+      return DropdownMenuItem<String>(
+        value: category.id,
+        child: Row(
+          children: [
+            Icon(Icons.folder, size: 18, color: _selectedColor.withOpacity(0.7)),
+            const SizedBox(width: 12),
+            Text(category.name),
+          ],
+        ),
+      );
+    }),
+  ],
+  onChanged: (value) => setState(() => _selectedCategory = value),
+),
                       const SizedBox(height: 20),
 
                       // Date Range

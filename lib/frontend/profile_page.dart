@@ -60,8 +60,32 @@ class _ProfilePageState extends State<ProfilePage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile & Settings'),
+  title: Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryBlue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.person_rounded,
+          color: AppTheme.primaryBlue,
+          size: 22,
+        ),
       ),
+      const SizedBox(width: 12),
+      const Text(
+        'Profile & Settings',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+      ),
+    ],
+  ),
+),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

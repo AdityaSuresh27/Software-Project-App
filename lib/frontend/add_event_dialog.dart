@@ -576,40 +576,40 @@ void _saveEvent() {
             const SizedBox(height: 20),
 
 
-          DropdownButtonFormField<String?>(
-          value: _selectedCategory,
-          style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
-          decoration: _buildInputDecoration(
-              'Category (Optional)', Icons.folder_outlined),
-              dropdownColor: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(12),
-              icon: Icon(Icons.arrow_drop_down_rounded, color: color, size: 28),
-              items: [
-                DropdownMenuItem<String?>(
-                  value: null,
-                  child: Row(
-                    children: [
-                      Icon(Icons.block, size: 18, color: AppTheme.otherGray),
-                      const SizedBox(width: 12),
-                      const Text('No category'),
-                    ],
-                  ),
-                ),
-                ...dataProvider.categories.map((category) {
-                  return DropdownMenuItem<String>(
-                    value: category.id,
-                    child: Row(
-                      children: [
-                        Icon(Icons.folder, size: 18, color: color.withOpacity(0.7)),
-                        const SizedBox(width: 12),
-                        Text(category.name),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-              onChanged: (value) => setState(() => _selectedCategory = value),
-            ),
+DropdownButtonFormField<String?>(
+  value: _selectedCategory,
+  style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
+  decoration: _buildInputDecoration(
+      'Category (Optional)', Icons.folder_outlined),
+  dropdownColor: Theme.of(context).cardColor,
+  borderRadius: BorderRadius.circular(12),
+  icon: Icon(Icons.arrow_drop_down_rounded, color: color, size: 28),
+  items: [
+    DropdownMenuItem<String?>(
+      value: null,
+      child: Row(
+        children: [
+          Icon(Icons.block, size: 18, color: AppTheme.otherGray),
+          const SizedBox(width: 12),
+          const Text('No category'),
+        ],
+      ),
+    ),
+    ...dataProvider.categories.map((category) {
+      return DropdownMenuItem<String>(
+        value: category.id,
+        child: Row(
+          children: [
+            Icon(Icons.folder, size: 18, color: color.withOpacity(0.7)),
+            const SizedBox(width: 12),
+            Text(category.name),
+          ],
+        ),
+      );
+    }),
+  ],
+  onChanged: (value) => setState(() => _selectedCategory = value),
+),
             const SizedBox(height: 20),
 
             InkWell(
@@ -645,20 +645,23 @@ void _saveEvent() {
             ],
 
             if (_isTaskType) ...[
-              DropdownButtonFormField<String>(
-                value: _estimatedDuration,
-                style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
-                decoration: _buildInputDecoration(
-                    'Estimated Duration', Icons.timer_outlined),
-                items: _durations.map((duration) {
-                  return DropdownMenuItem(
-                    value: duration,
-                    child: Text(duration),
-                  );
-                }).toList(),
-                onChanged: (value) =>
-                    setState(() => _estimatedDuration = value!),
-              ),
+DropdownButtonFormField<String>(
+  value: _estimatedDuration,
+  style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
+  decoration: _buildInputDecoration(
+      'Estimated Duration', Icons.timer_outlined),
+  dropdownColor: Theme.of(context).cardColor,
+  borderRadius: BorderRadius.circular(12),
+  icon: Icon(Icons.arrow_drop_down_rounded, color: color, size: 28),
+  items: _durations.map((duration) {
+    return DropdownMenuItem(
+      value: duration,
+      child: Text(duration),
+    );
+  }).toList(),
+  onChanged: (value) =>
+      setState(() => _estimatedDuration = value!),
+),
               const SizedBox(height: 20),
             ],
 

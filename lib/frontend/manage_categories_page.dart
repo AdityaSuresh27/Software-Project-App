@@ -111,8 +111,32 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
       builder: (context, dataProvider, child) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Manage Categories'),
-          ),
+  title: Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppTheme.accentPurple.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.folder_rounded,
+          color: AppTheme.accentPurple,
+          size: 22,
+        ),
+      ),
+      const SizedBox(width: 12),
+      const Text(
+        'Categories',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+      ),
+    ],
+  ),
+),
           body: dataProvider.categories.isEmpty
               ? Center(
                   child: Column(

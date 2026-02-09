@@ -49,8 +49,32 @@ class _EventsPageState extends State<EventsPage> {
         
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Events'),
-            actions: [
+  title: Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppTheme.assignmentPurple.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.event_note_rounded,
+          color: AppTheme.assignmentPurple,
+          size: 22,
+        ),
+      ),
+      const SizedBox(width: 12),
+      const Text(
+        'Events',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+      ),
+    ],
+  ),
+  actions: [
               PopupMenuButton<String>(
                 icon: const Icon(Icons.sort),
                 onSelected: (value) {

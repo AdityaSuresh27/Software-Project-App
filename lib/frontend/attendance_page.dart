@@ -31,8 +31,32 @@ class _AttendancePageState extends State<AttendancePage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Attendance Tracker'),
-            actions: [
+  title: Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppTheme.successGreen.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.bar_chart_rounded,
+          color: AppTheme.successGreen,
+          size: 22,
+        ),
+      ),
+      const SizedBox(width: 12),
+      const Text(
+        'Attendance',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+      ),
+    ],
+  ),
+  actions: [
               PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == 'reset') {
