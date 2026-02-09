@@ -6,6 +6,7 @@ import 'theme_provider.dart';
 import 'auth_screen.dart';
 import '../backend/data_provider.dart';
 import 'manage_categories_page.dart';
+import 'privacy_policy_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -158,11 +159,14 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildInfoTile('Version', '2.0.0', Icons.info_outline),
               _buildTile(
                 'Privacy Policy',
-                '',
+                'How we handle your data',
                 Icons.privacy_tip_outlined,
                 () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Privacy Policy coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyPage(),
+                    ),
                   );
                 },
               ),
