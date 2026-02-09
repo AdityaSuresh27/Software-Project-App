@@ -13,7 +13,7 @@ class AddEventDialog extends StatefulWidget {
   final DateTime? selectedDate;
   final Event? editEvent;
   final String? presetClassification;
-
+  
   const AddEventDialog({
     super.key,
     this.selectedDate,
@@ -325,15 +325,6 @@ void _saveEvent() {
   }
 
   Navigator.pop(context);
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-          widget.editEvent != null ? 'Event updated' : 'Event created'),
-      backgroundColor: AppTheme.successGreen,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
 }
 
   @override
@@ -505,6 +496,7 @@ void _saveEvent() {
   }
 
   Widget _buildDetailsTab(DataProvider dataProvider) {
+    final color = AppTheme.getClassificationColor(_selectedClassification);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
@@ -583,20 +575,36 @@ void _saveEvent() {
             ),
             const SizedBox(height: 20),
 
-            DropdownButtonFormField<String?>(
-              value: _selectedCategory,
-              style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
-              decoration: _buildInputDecoration(
-                  'Category (Optional)', Icons.folder_outlined),
+
+          DropdownButtonFormField<String?>(
+          value: _selectedCategory,
+          style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
+          decoration: _buildInputDecoration(
+              'Category (Optional)', Icons.folder_outlined),
+              dropdownColor: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              icon: Icon(Icons.arrow_drop_down_rounded, color: color, size: 28),
               items: [
-                const DropdownMenuItem<String?>(
+                DropdownMenuItem<String?>(
                   value: null,
-                  child: Text('No category'),
+                  child: Row(
+                    children: [
+                      Icon(Icons.block, size: 18, color: AppTheme.otherGray),
+                      const SizedBox(width: 12),
+                      const Text('No category'),
+                    ],
+                  ),
                 ),
                 ...dataProvider.categories.map((category) {
                   return DropdownMenuItem<String>(
                     value: category.id,
-                    child: Text(category.name),
+                    child: Row(
+                      children: [
+                        Icon(Icons.folder, size: 18, color: color.withOpacity(0.7)),
+                        const SizedBox(width: 12),
+                        Text(category.name),
+                      ],
+                    ),
                   );
                 }),
               ],

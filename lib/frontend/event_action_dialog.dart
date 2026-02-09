@@ -302,8 +302,9 @@ Widget _buildClassActions(BuildContext context, Color color) {
     
     dataProvider.markAttendance(record);
     
-    // Update event completion color based on attendance
+    // Update event completion color and status based on attendance
     event.completionColor = '#${_getAttendanceColor(status).value.toRadixString(16).substring(2)}';
+    event.isCompleted = true; 
     dataProvider.updateEvent(event);
     
     Navigator.pop(context);

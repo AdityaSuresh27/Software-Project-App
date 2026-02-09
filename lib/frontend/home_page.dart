@@ -200,7 +200,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: _buildStatCard(
                       context,
                       '${stats['assignments'] ?? 0}',
-                      'Tasks',
+                      'Assignments',
                       Icons.assignment_outlined,
                       AppTheme.assignmentPurple,
                       100,
@@ -467,60 +467,56 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildUpcomingEvents(BuildContext context, DataProvider dataProvider, DateTime now) {
-    // Get today's incomplete/unmarked events (max 3)
-    final today = DateTime(now.year, now.month, now.day);
+Widget _buildUpcomingEvents(BuildContext context, DataProvider dataProvider, DateTime now) {
+  // Get today's events that need completion
+  final todayEvents = dataProvider.getEventsForDay(now);
+  
+  final upcomingEvents = todayEvents.where((event) {
+    // Check if event is incomplete/unmarked (including classes)
+    final isIncomplete = !event.isCompleted && event.completionColor == null;
     
-    final todayEvents = dataProvider.getEventsForDay(now);
-    final upcomingEvents = todayEvents.where((event) {
-      // Check if event is in the future
-      final isUpcoming = event.startTime.isAfter(now);
-      
-      // Check if event is incomplete/unmarked
-      final isIncomplete = !event.isCompleted && event.completionColor == null;
-      
-      return isUpcoming && isIncomplete;
-    }).toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    return isIncomplete;
+  }).toList()
+    ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
-    // Take only first 3 events
-    final displayEvents = upcomingEvents.take(3).toList();
+  // Take only first 3 events
+  final displayEvents = upcomingEvents.take(3).toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Upcoming Events',
-              style: Theme.of(context).textTheme.titleMedium,
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Upcoming Events',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          if (upcomingEvents.length > 3)
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EventsPage(),
+                  ),
+                );
+              },
+              child: const Text('View All'),
             ),
-            if (upcomingEvents.length > 3)
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EventsPage(),
-                    ),
-                  );
-                },
-                child: const Text('View All'),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        displayEvents.isEmpty
-            ? _buildEmptyUpcoming(context)
-            : Column(
-                children: displayEvents.asMap().entries.map((entry) {
-                  return _buildEventCard(context, entry.value, entry.key);
-                }).toList(),
-              ),
-      ],
-    );
-  }
+        ],
+      ),
+      const SizedBox(height: 12),
+      displayEvents.isEmpty
+          ? _buildEmptyUpcoming(context)
+          : Column(
+              children: displayEvents.asMap().entries.map((entry) {
+                return _buildEventCard(context, entry.value, entry.key, now);
+              }).toList(),
+            ),
+    ],
+  );
+}
 
   Widget _buildEmptyUpcoming(BuildContext context) {
     return TweenAnimationBuilder<double>(
@@ -565,22 +561,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildEventCard(BuildContext context, Event event, int index) {
+  Widget _buildEventCard(BuildContext context, Event event, int index, DateTime now) {
     final color = event.completionColor != null
         ? Color(int.parse(event.completionColor!.replaceFirst('#', '0xFF')))
         : AppTheme.getClassificationColor(event.classification);
-    final now = DateTime.now();
-    final timeUntil = event.startTime.difference(now);
     
-    String timeUntilText;
-    if (timeUntil.inMinutes < 60) {
-      timeUntilText = 'In ${timeUntil.inMinutes} min';
-    } else if (timeUntil.inHours < 24) {
-      final hours = timeUntil.inHours;
-      final minutes = timeUntil.inMinutes.remainder(60);
-      timeUntilText = 'In ${hours}h ${minutes}m';
+    // Determine time status
+    String timeStatusText;
+    Color timeStatusColor;
+    IconData timeStatusIcon;
+    
+    final endTime = event.endTime ?? event.startTime; // Use startTime as fallback
+    
+    if (now.isBefore(event.startTime)) {
+      // Event hasn't started yet
+      final timeUntil = event.startTime.difference(now);
+      if (timeUntil.inMinutes < 60) {
+        timeStatusText = 'In ${timeUntil.inMinutes} min';
+      } else if (timeUntil.inHours < 24) {
+        final hours = timeUntil.inHours;
+        final minutes = timeUntil.inMinutes.remainder(60);
+        timeStatusText = 'In ${hours}h ${minutes}m';
+      } else {
+        timeStatusText = DateFormat('h:mm a').format(event.startTime);
+      }
+      timeStatusColor = color;
+      timeStatusIcon = Icons.schedule;
+    } else if (now.isAfter(event.startTime) && now.isBefore(endTime)) {
+      // Event is in progress
+      timeStatusText = 'In Progress';
+      timeStatusColor = AppTheme.warningAmber;
+      timeStatusIcon = Icons.play_circle_outline;
     } else {
-      timeUntilText = DateFormat('h:mm a').format(event.startTime);
+      // Event is overdue
+      timeStatusText = 'Overdue';
+      timeStatusColor = AppTheme.errorRed;
+      timeStatusIcon = Icons.warning_outlined;
     }
     
     return TweenAnimationBuilder<double>(
@@ -611,48 +627,69 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Hero(
-                  tag: 'event_${event.id}_home',
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: color.withOpacity(0.3), width: 1.5),
-                    ),
-                    child: Icon(
-                      AppTheme.getClassificationIcon(event.classification),
-                      color: color,
-                      size: 26,
-                    ),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+                  ),
+                  child: Icon(
+                    AppTheme.getClassificationIcon(event.classification),
+                    color: color,
+                    size: 26,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        event.title,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(Icons.schedule, size: 14, color: color),
-                          const SizedBox(width: 4),
-                          Text(
-                            timeUntilText,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: color,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Expanded(
+              child: Text(
+                event.title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: color.withOpacity(0.25), width: 1),
+              ),
+              child: Text(
+                event.classification[0].toUpperCase() + event.classification.substring(1),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(timeStatusIcon, size: 14, color: timeStatusColor),
+            const SizedBox(width: 4),
+            Text(
+              timeStatusText,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: timeStatusColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
                           if (event.estimatedDuration != null) ...[
                             const SizedBox(width: 12),
                             Icon(Icons.timer_outlined, size: 14, color: color.withOpacity(0.7)),

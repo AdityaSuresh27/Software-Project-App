@@ -15,10 +15,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  bool _reduceAnimations = false;
-  bool _studyMode = false;
   String _selectedTheme = 'Professional';
-  String _defaultView = 'Home';
 
   Future<void> _handleSignOut() async {
     final confirm = await showDialog<bool>(
@@ -72,17 +69,6 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 32),
           _buildSection(
             context,
-            'Personal Information',
-            [
-              _buildInfoTile('Name', 'Student User', Icons.person_outline),
-              _buildInfoTile('Role', 'Student', Icons.school_outlined),
-              _buildInfoTile('Semester', 'Spring 2026', Icons.calendar_today_outlined),
-              _buildInfoTile('Institution', 'University Name', Icons.location_city_outlined),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSection(
-            context,
             'Appearance',
             [
               SwitchListTile(
@@ -100,34 +86,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ['Professional', 'Academic', 'Minimal'],
                 (value) => setState(() => _selectedTheme = value!),
                 Icons.palette_outlined,
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.animation),
-                title: const Text('Reduce Animations'),
-                subtitle: const Text('Minimize motion effects'),
-                value: _reduceAnimations,
-                onChanged: (value) => setState(() => _reduceAnimations = value),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSection(
-            context,
-            'Workflow',
-            [
-              _buildDropdownTile(
-                'Default View',
-                _defaultView,
-                ['Home', 'Calendar', 'Timeline', 'Events'],
-                (value) => setState(() => _defaultView = value!),
-                Icons.view_compact_outlined,
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.school_outlined),
-                title: const Text('Study Mode'),
-                subtitle: const Text('Minimal interface during focus time'),
-                value: _studyMode,
-                onChanged: (value) => setState(() => _studyMode = value),
               ),
             ],
           ),
@@ -149,16 +107,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 },
               ),
-              _buildTile(
-                'Export Data',
-                'Backup your events',
-                Icons.download_outlined,
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Export feature coming soon')),
-                  );
-                },
-              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -176,11 +124,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 value: true,
                 onChanged: (value) {},
               ),
-              SwitchListTile(
-                title: const Text('Voice Note Notifications'),
-                value: false,
-                onChanged: (value) {},
-              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -189,16 +132,6 @@ class _ProfilePageState extends State<ProfilePage> {
             'About',
             [
               _buildInfoTile('Version', '2.0.0', Icons.info_outline),
-              _buildTile(
-                'Help & Support',
-                '',
-                Icons.help_outline,
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Help & Support coming soon')),
-                  );
-                },
-              ),
               _buildTile(
                 'Privacy Policy',
                 '',

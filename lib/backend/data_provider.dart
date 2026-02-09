@@ -292,11 +292,14 @@ class DataProvider extends ChangeNotifier {
     final now = DateTime.now();
     final todayEvents = getEventsForDay(now);
     
-    int classes = todayEvents.where((e) => e.classification == 'class').length;
-    int exams = todayEvents.where((e) => e.classification == 'exam').length;
+    int classes = todayEvents.where((e) => 
+        e.classification == 'class' && !e.isCompleted && e.completionColor == null).length;
+    int exams = todayEvents.where((e) => 
+        e.classification == 'exam' && !e.isCompleted && e.completionColor == null).length;
     int assignments = todayEvents.where((e) => 
         e.classification == 'assignment' && !e.isCompleted).length;
-    int meetings = todayEvents.where((e) => e.classification == 'meeting').length;
+    int meetings = todayEvents.where((e) => 
+        e.classification == 'meeting' && !e.isCompleted && e.completionColor == null).length;
     
     return {
       'classes': classes,
