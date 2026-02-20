@@ -832,14 +832,19 @@ DropdownButtonFormField<String>(
           ),
           if (_reminders.isNotEmpty) ...[
             const SizedBox(height: 16),
-            ...List.generate(_reminders.length, (index) {
+...List.generate(_reminders.length, (index) {
+              final isPast = _reminders[index].isBefore(DateTime.now());
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.08),
+                  color: isPast
+                      ? AppTheme.errorRed.withOpacity(0.05)
+                      : color.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: color.withOpacity(0.2),
+                    color: isPast
+                        ? AppTheme.errorRed.withOpacity(0.3)
+                        : color.withOpacity(0.2),
                     width: 2,
                   ),
                 ),
@@ -847,21 +852,36 @@ DropdownButtonFormField<String>(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.2),
+                      color: isPast
+                          ? AppTheme.errorRed.withOpacity(0.15)
+                          : color.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      Icons.notifications_outlined,
-                      color: color,
+                      isPast
+                          ? Icons.notifications_off_outlined
+                          : Icons.notifications_outlined,
+                      color: isPast ? AppTheme.errorRed : color,
                     ),
                   ),
                   title: Text(
                     DateFormat('MMM d, h:mm a').format(_reminders[index]),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
+                      color: isPast ? AppTheme.errorRed : null,
+                      decoration: isPast ? TextDecoration.lineThrough : null,
                     ),
                   ),
+                  subtitle: isPast
+                      ? Text(
+                          'This reminder has already passed',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.errorRed.withOpacity(0.8),
+                          ),
+                        )
+                      : null,
                   trailing: IconButton(
                     onPressed: () => _removeReminder(index),
                     icon: const Icon(Icons.close),

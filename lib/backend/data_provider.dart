@@ -11,6 +11,8 @@ class DataProvider extends ChangeNotifier {
   List<Event> _events = [];
   List<Category> _categories = [];
   bool _isAuthenticated = false;
+  bool _mfaEnabled = false;
+  DateTime? _lastActiveAt;
   List<TimetableEntry> _timetableEntries = [];
   List<AttendanceRecord> _attendanceRecords = [];
 
@@ -19,6 +21,7 @@ class DataProvider extends ChangeNotifier {
   List<Event> get events => _events;
   List<Category> get categories => _categories;
   bool get isAuthenticated => _isAuthenticated;
+  bool get mfaEnabled => _mfaEnabled;
 
   DataProvider() {
     _loadData();
@@ -26,9 +29,36 @@ class DataProvider extends ChangeNotifier {
   }
 
   // Check authentication status
-  Future<void> _checkAuthStatus() async {
+Future<void> _checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
+    _mfaEnabled = prefs.getBool('mfaEnabled') ?? false;
+
+    final lastActiveStr = prefs.getString('lastActiveAt');
+    if (lastActiveStr != null) {
+      _lastActiveAt = DateTime.tryParse(lastActiveStr);
+    }
+
+    // Automatically sign out after 90 days of no app activity.
+    // This protects shared/lost devices without requiring the user to remember
+    // to sign out manually. The counter resets on every successful app open.
+    if (_lastActiveAt != null) {
+      final daysSinceActive =
+          DateTime.now().difference(_lastActiveAt!).inDays;
+      if (daysSinceActive >= 90) {
+        await signOut();
+        return;
+      }
+    }
+
     _isAuthenticated = prefs.getBool('isAuthenticated') ?? false;
+
+    // Refresh the activity timestamp each time the app is opened so the
+    // 90-day window slides forward for active users.
+    if (_isAuthenticated) {
+      await prefs.setString('lastActiveAt', DateTime.now().toIso8601String());
+      _lastActiveAt = DateTime.now();
+    }
+
     notifyListeners();
   }
 
@@ -36,7 +66,11 @@ class DataProvider extends ChangeNotifier {
   Future<void> signIn() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isAuthenticated', true);
+    // Record the sign-in time as the first activity timestamp.
+    // Subsequent opens update this via _checkAuthStatus.
+    await prefs.setString('lastActiveAt', DateTime.now().toIso8601String());
     _isAuthenticated = true;
+    _lastActiveAt = DateTime.now();
     notifyListeners();
   }
 
@@ -44,12 +78,24 @@ class DataProvider extends ChangeNotifier {
   Future<void> signOut() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isAuthenticated', false);
+    // Clear the activity timestamp so an auto-logout doesn't
+    // re-trigger on the next sign-in before a new timestamp is written.
+    await prefs.remove('lastActiveAt');
     await prefs.remove('events');
     await prefs.remove('categories');
-    // Keep old data for migration if needed
     _isAuthenticated = false;
+    _lastActiveAt = null;
     _events = [];
     _categories = [];
+    notifyListeners();
+  }
+  
+  // Persists the MFA preference immediately to SharedPreferences so it
+  // survives app restarts and is available before _loadData completes.
+  Future<void> setMfaEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('mfaEnabled', enabled);
+    _mfaEnabled = enabled;
     notifyListeners();
   }
 

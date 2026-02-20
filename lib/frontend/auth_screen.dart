@@ -5,6 +5,7 @@ import '../backend/data_provider.dart';
 import 'main_navigation.dart';
 import 'theme.dart';
 import 'forgot_password_page.dart';
+import 'otp_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -75,31 +76,65 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
-      // Simulate network delay
+
       await Future.delayed(const Duration(milliseconds: 800));
-      
+
       if (mounted) {
         final dataProvider = Provider.of<DataProvider>(context, listen: false);
         await dataProvider.signIn();
-        
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const MainNavigation(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+
+        if (dataProvider.mfaEnabled && _isLogin) {
+          // Route through OTP screen before entering the app
+          setState(() => _isLoading = false);
+          final verified = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(
+              builder: (_) => const OtpScreen(),
+            ),
+          );
+          if (verified == true && mounted) {
+            Navigator.of(context).pushReplacement(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const MainNavigation(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                        CurvedAnimation(
+                            parent: animation, curve: Curves.easeOutCubic),
+                      ),
+                      child: child,
+                    ),
+                  );
+                },
+                transitionDuration: const Duration(milliseconds: 400),
+              ),
+            );
+          }
+        } else {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const MainNavigation(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                      CurvedAnimation(
+                          parent: animation, curve: Curves.easeOutCubic),
+                    ),
+                    child: child,
                   ),
-                  child: child,
-                ),
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
-        );
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 400),
+            ),
+          );
+        }
       }
     }
   }
