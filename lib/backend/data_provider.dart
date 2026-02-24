@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'models.dart';
 import 'notification_service.dart';
 import 'timetable_models.dart';
+import 'dart:async';
 import 'package:uuid/uuid.dart';
 
 class DataProvider extends ChangeNotifier {
@@ -18,6 +19,11 @@ class DataProvider extends ChangeNotifier {
   bool _notifyEventStart = true;  // fires when an event's startTime arrives
   List<TimetableEntry> _timetableEntries = [];
   List<AttendanceRecord> _attendanceRecords = [];
+  // Completes once both _loadData and _checkAuthStatus have finished.
+  // The splash screen awaits this instead of polling, eliminating the
+  // race condition where isAuthenticated is read before prefs are loaded.
+  final Completer<void> _readyCompleter = Completer<void>();
+  Future<void> get ready => _readyCompleter.future;
 
   List<TimetableEntry> get timetableEntries => _timetableEntries;
   List<AttendanceRecord> get attendanceRecords => _attendanceRecords;
@@ -28,9 +34,12 @@ class DataProvider extends ChangeNotifier {
   bool get notifyReminders => _notifyReminders;
   bool get notifyEventStart => _notifyEventStart;
 
-  DataProvider() {
-    _loadData();
-    _checkAuthStatus();
+DataProvider() {
+    // Run both loads concurrently and complete the ready future only after
+    // both finish, so the splash screen gets an accurate isAuthenticated value.
+    Future.wait([_loadData(), _checkAuthStatus()]).then((_) {
+      if (!_readyCompleter.isCompleted) _readyCompleter.complete();
+    });
   }
 
   // Check authentication status

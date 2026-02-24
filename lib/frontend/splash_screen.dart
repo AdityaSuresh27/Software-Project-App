@@ -46,24 +46,21 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateWhenReady() async {
-    // Minimum time to show the splash — feels intentional, not like a glitch
-    final minimumSplash = Future.delayed(const Duration(milliseconds: 2000));
-
-    // Poll until DataProvider has finished its async _loadData and
-    // _checkAuthStatus. Both call notifyListeners() when done, so we
-    // wait for isAuthenticated to be readable (load completes quickly,
-    // but the Future itself isn't exposed, so we poll with a short delay).
-    // In practice this resolves in well under 500ms on any real device.
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
+
+    // Wait for both the minimum splash duration AND DataProvider to fully
+    // finish loading from SharedPreferences (including _checkAuthStatus).
+    // dataProvider.ready is a Completer that resolves only after both
+    // _loadData() and _checkAuthStatus() have completed, so isAuthenticated
+    // is guaranteed to reflect the persisted value by the time we read it.
     await Future.wait([
-      minimumSplash,
-      _waitForDataProvider(dataProvider),
+      Future.delayed(const Duration(milliseconds: 2000)),
+      dataProvider.ready,
     ]);
 
     if (!mounted) return;
 
     if (dataProvider.isAuthenticated) {
-      // Already logged in and session is still valid — go straight home
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (_, animation, __) => const MainNavigation(),
@@ -73,7 +70,6 @@ class _SplashScreenState extends State<SplashScreen>
         ),
       );
     } else {
-      // Not authenticated — show onboarding/login flow
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (_, animation, __) => const OnboardingScreen(),
@@ -82,27 +78,6 @@ class _SplashScreenState extends State<SplashScreen>
           transitionDuration: const Duration(milliseconds: 500),
         ),
       );
-    }
-  }
-
-  // Waits until DataProvider has finished loading by checking every 100ms.
-  // We know loading is done when _loadData and _checkAuthStatus have both
-  // called notifyListeners — in practice categories are always populated
-  // after a successful load, so we use that as the ready signal.
-  Future<void> _waitForDataProvider(DataProvider dataProvider) async {
-    // Give it a moment to start the async load
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    for (int i = 0; i < 30; i++) {
-      // categories are initialized either from prefs or defaults in _loadData,
-      // so non-empty categories means loading finished.
-      // Also break if isAuthenticated is false — _checkAuthStatus has run.
-      final loadedCategories = dataProvider.categories.isNotEmpty;
-      // After _checkAuthStatus runs, lastActiveAt or isAuthenticated is set.
-      // We check both: authenticated users have categories, unauthenticated
-      // users also get default categories, so this covers both paths.
-      if (loadedCategories) break;
-      await Future.delayed(const Duration(milliseconds: 100));
     }
   }
 
