@@ -242,17 +242,12 @@ class _ProfilePageState extends State<ProfilePage> {
       if (confirm == true && mounted) {
         await dataProvider.setMfaEnabled(!isMfaEnabled);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isMfaEnabled
-                    ? '2FA has been disabled'
-                    : '2FA has been enabled. You will need a code on next sign in.',
-              ),
-              backgroundColor:
-                  isMfaEnabled ? AppTheme.warningAmber : AppTheme.successGreen,
-              behavior: SnackBarBehavior.floating,
-            ),
+          AppTheme.showTopNotification(
+            context,
+            isMfaEnabled
+                ? '2FA has been disabled.'
+                : '2FA enabled — you\'ll need a code on next sign in.',
+            type: isMfaEnabled ? NotificationType.warning : NotificationType.success,
           );
         }
       }

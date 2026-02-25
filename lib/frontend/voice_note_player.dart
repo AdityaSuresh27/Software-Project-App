@@ -76,24 +76,22 @@ class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
           print('Playing audio from: ${widget.voiceNote.filePath}');
         } else {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Audio file not found at: ${widget.voiceNote.filePath}'),
-                backgroundColor: AppTheme.errorRed,
-              ),
-            );
-          }
+              AppTheme.showTopNotification(
+                context,
+                'Audio file could not be found.',
+                type: NotificationType.error,
+              );
+            }
         }
       } catch (e) {
         print('Error playing audio: $e');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error playing audio: $e'),
-              backgroundColor: AppTheme.errorRed,
-            ),
-          );
-        }
+            AppTheme.showTopNotification(
+              context,
+              'Could not play audio. The file may be corrupted.',
+              type: NotificationType.error,
+            );
+          }
       }
     }
   }

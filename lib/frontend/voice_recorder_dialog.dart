@@ -52,12 +52,11 @@ class _VoiceRecorderDialogState extends State<VoiceRecorderDialog> {
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Microphone permission is required to record audio'),
-            backgroundColor: AppTheme.errorRed,
-          ),
-        );
+        AppTheme.showTopNotification(
+        context,
+        'Microphone permission needed to record',
+        type: NotificationType.warning,
+      );
       }
     }
   }
@@ -86,10 +85,12 @@ class _VoiceRecorderDialogState extends State<VoiceRecorderDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error starting recording: $e')),
-        );
-      }
+          AppTheme.showTopNotification(
+            context,
+            'Could not start recording. Please try again.',
+            type: NotificationType.error,
+          );
+        }
     }
   }
 
@@ -149,16 +150,10 @@ class _VoiceRecorderDialogState extends State<VoiceRecorderDialog> {
 
       Navigator.pop(context, voiceNote);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.eventId != null
-                ? 'Voice note added to event'
-                : 'Voice note saved',
-          ),
-          backgroundColor: AppTheme.successGreen,
-          behavior: SnackBarBehavior.floating,
-        ),
+      AppTheme.showTopNotification(
+        context,
+        widget.eventId != null ? 'Voice note added to event.' : 'Voice note saved.',
+        type: NotificationType.success,
       );
     }
   }

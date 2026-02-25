@@ -838,27 +838,10 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
             onPressed: () {
               dataProvider.deleteTimetableEntry(entry.id);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 17),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text('Class deleted successfully', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                    ],
-                  ),
-                  backgroundColor: AppTheme.errorRed,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  margin: const EdgeInsets.all(14),
-                ),
+              AppTheme.showTopNotification(
+                context,
+                'Class deleted successfully.',
+                type: NotificationType.info,
               );
             },
             style: FilledButton.styleFrom(
@@ -973,27 +956,10 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
               await dataProvider.resetTimetableAndAttendance();
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                          child: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 17),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text('Reset successful', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      ],
-                    ),
-                    backgroundColor: AppTheme.successGreen,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    margin: const EdgeInsets.all(14),
-                  ),
+                AppTheme.showTopNotification(
+                  context,
+                  'Timetable and attendance have been reset.',
+                  type: NotificationType.success,
                 );
               }
             },

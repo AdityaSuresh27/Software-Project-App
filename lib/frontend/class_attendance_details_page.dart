@@ -319,12 +319,11 @@ PopupMenuButton<String>(
       _showUnmarkConfirmation(context, record, dataProvider);
     } else if (value == 'delete') {
       dataProvider.deleteAttendanceRecord(record.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Attendance record deleted'),
-          backgroundColor: AppTheme.errorRed,
-          behavior: SnackBarBehavior.floating,
-        ),
+      dataProvider.deleteAttendanceRecord(record.id);
+      AppTheme.showTopNotification(
+        context,
+        'Attendance record deleted.',
+        type: NotificationType.info,
       );
     }
   },
@@ -412,27 +411,10 @@ void _showUnmarkConfirmation(
           onPressed: () {
             dataProvider.deleteAttendanceRecord(record.id);
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 17),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text('Attendance unmarked', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  ],
-                ),
-                backgroundColor: AppTheme.warningAmber,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                margin: const EdgeInsets.all(14),
-              ),
+            AppTheme.showTopNotification(
+              context,
+              'Attendance unmarked.',
+              type: NotificationType.warning,
             );
           },
           style: FilledButton.styleFrom(
@@ -540,12 +522,14 @@ void _showMarkAttendanceDialog(
                 );
                 dataProvider.markAttendance(record);
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Marked as ${status.toString().split('.').last}'),
-                    backgroundColor: statusColor,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                AppTheme.showTopNotification(
+                  context,
+                  'Marked as ${status.toString().split('.').last}.',
+                  type: status == AttendanceStatus.present
+                      ? NotificationType.success
+                      : status == AttendanceStatus.absent
+                          ? NotificationType.error
+                          : NotificationType.info,
                 );
               },
               borderRadius: BorderRadius.circular(12),
@@ -620,12 +604,14 @@ void _showEditAttendanceDialog(
                 );
                 dataProvider.markAttendance(updatedRecord);
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Updated to ${status.toString().split('.').last}'),
-                    backgroundColor: statusColor,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                AppTheme.showTopNotification(
+                  context,
+                  'Attendance updated to ${status.toString().split('.').last}.',
+                  type: status == AttendanceStatus.present
+                      ? NotificationType.success
+                      : status == AttendanceStatus.absent
+                          ? NotificationType.error
+                          : NotificationType.info,
                 );
               },
               borderRadius: BorderRadius.circular(12),
@@ -724,13 +710,11 @@ void _showEditAttendanceDialog(
             onPressed: () {
               dataProvider.clearAttendanceForCourse(courseName);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Cleared all records for $courseName'),
-                  backgroundColor: AppTheme.successGreen,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              AppTheme.showTopNotification(
+                  context,
+                  'All records cleared for $courseName.',
+                  type: NotificationType.info,
+                );
             },
             style: FilledButton.styleFrom(backgroundColor: AppTheme.errorRed),
             child: const Text('Clear All'),

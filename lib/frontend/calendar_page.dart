@@ -365,12 +365,10 @@ class _CalendarPageState extends State<CalendarPage> {
   void _duplicateEvent(BuildContext context, Event event, DataProvider dataProvider) {
     final duplicatedEvent = event.duplicate();
     dataProvider.addEvent(duplicatedEvent);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Event duplicated'),
-        backgroundColor: AppTheme.successGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppTheme.showTopNotification(
+      context,
+      'Event duplicated.',
+      type: NotificationType.success,
     );
   }
 
@@ -389,12 +387,10 @@ class _CalendarPageState extends State<CalendarPage> {
             onPressed: () {
               dataProvider.deleteEvent(event.id);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Event deleted'),
-                  backgroundColor: AppTheme.errorRed,
-                  behavior: SnackBarBehavior.floating,
-                ),
+              AppTheme.showTopNotification(
+                context,
+                'Event deleted.',
+                type: NotificationType.info,
               );
             },
             style: FilledButton.styleFrom(

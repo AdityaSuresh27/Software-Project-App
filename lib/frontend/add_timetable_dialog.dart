@@ -95,13 +95,11 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
   void _saveTimetableEntry() {
     if (_formKey.currentState!.validate()) {
       if (_selectedDays.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Please select at least one day'),
-            backgroundColor: AppTheme.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppTheme.showTopNotification(
+            context,
+            'Please select at least one day of the week.',
+            type: NotificationType.warning,
+          );
         return;
       }
 
@@ -131,13 +129,11 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
         
         Navigator.pop(context);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Class added to timetable'),
-            backgroundColor: AppTheme.successGreen,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppTheme.showTopNotification(
+            context,
+            'Class added to timetable.',
+            type: NotificationType.success,
+          );
       }
     }
   }
@@ -160,12 +156,10 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
               Navigator.pop(context); // Close options dialog
               Navigator.pop(context); // Close edit dialog
               
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('This feature edits the entire series. Use the calendar to edit single classes.'),
-                  backgroundColor: AppTheme.warningAmber,
-                  behavior: SnackBarBehavior.floating,
-                ),
+              AppTheme.showTopNotification(
+                context,
+                'To edit a single class, tap it directly on the calendar.',
+                type: NotificationType.info,
               );
             },
             child: const Text('This Class Only'),
@@ -193,12 +187,10 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
               Navigator.pop(context); // Close options dialog
               Navigator.pop(context); // Close edit dialog
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('All classes in series updated'),
-                  backgroundColor: AppTheme.successGreen,
-                  behavior: SnackBarBehavior.floating,
-                ),
+              AppTheme.showTopNotification(
+                context,
+                'All classes in this series have been updated.',
+                type: NotificationType.success,
               );
             },
             style: FilledButton.styleFrom(

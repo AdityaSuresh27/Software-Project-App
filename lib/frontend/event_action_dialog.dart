@@ -242,21 +242,10 @@ Widget _buildClassActions(BuildContext context, Color color) {
               dataProvider.toggleEventComplete(event.id);
               Navigator.pop(context);
               
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isCompleted 
-                        ? 'Event marked as incomplete'
-                        : 'Event marked as complete',
-                  ),
-                  backgroundColor: isCompleted 
-                      ? AppTheme.warningAmber 
-                      : AppTheme.successGreen,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              AppTheme.showTopNotification(
+                context,
+                isCompleted ? 'Event marked as incomplete.' : 'Event marked as complete!',
+                type: isCompleted ? NotificationType.warning : NotificationType.success,
               );
             },
             icon: Icon(
@@ -327,12 +316,10 @@ Widget _buildClassActions(BuildContext context, Color color) {
       
       Navigator.pop(context);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Attendance unmarked'),
-          backgroundColor: AppTheme.warningAmber,
-          behavior: SnackBarBehavior.floating,
-        ),
+      AppTheme.showTopNotification(
+        context,
+        'Attendance has been cleared for this class.',
+        type: NotificationType.warning,
       );
     }
   }
@@ -356,12 +343,14 @@ Widget _buildClassActions(BuildContext context, Color color) {
     
     Navigator.pop(context);
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Marked as ${_getAttendanceLabel(status)}'),
-        backgroundColor: _getAttendanceColor(status),
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppTheme.showTopNotification(
+      context,
+      'Attendance marked as ${_getAttendanceLabel(status)}.',
+      type: status == AttendanceStatus.present
+          ? NotificationType.success
+          : status == AttendanceStatus.absent
+              ? NotificationType.error
+              : NotificationType.info,
     );
   }
 

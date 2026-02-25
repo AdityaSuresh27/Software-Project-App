@@ -326,4 +326,162 @@ class AppTheme {
         return Icons.event_outlined;
     }
   }
+  // Call this instead of ScaffoldMessenger.showSnackBar everywhere.
+  // Shows a polished banner pinned to the TOP of the screen so it never
+  // hides behind dialogs or the keyboard, and looks intentional rather
+  // than like a system error.
+  static void showTopNotification(
+    BuildContext context,
+    String message, {
+    NotificationType type = NotificationType.info,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    final (Color bg, Color fg, IconData icon) = switch (type) {
+      NotificationType.success => (
+          const Color(0xFF10B981),
+          Colors.white,
+          Icons.check_circle_rounded,
+        ),
+      NotificationType.error => (
+          const Color(0xFFEF4444),
+          Colors.white,
+          Icons.error_rounded,
+        ),
+      NotificationType.warning => (
+          const Color(0xFFF59E0B),
+          Colors.white,
+          Icons.warning_rounded,
+        ),
+      NotificationType.info => (
+          const Color(0xFF2563EB),
+          Colors.white,
+          Icons.info_rounded,
+        ),
+    };
+
+    entry = OverlayEntry(
+      builder: (_) => _TopNotificationBanner(
+        message: message,
+        backgroundColor: bg,
+        foregroundColor: fg,
+        icon: icon,
+        duration: duration,
+        onDismiss: () => entry.remove(),
+      ),
+    );
+
+    overlay.insert(entry);
+  }
+}
+enum NotificationType { success, error, warning, info }
+
+class _TopNotificationBanner extends StatefulWidget {
+  final String message;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final IconData icon;
+  final Duration duration;
+  final VoidCallback onDismiss;
+
+  const _TopNotificationBanner({
+    required this.message,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.icon,
+    required this.duration,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_TopNotificationBanner> createState() => _TopNotificationBannerState();
+}
+
+class _TopNotificationBannerState extends State<_TopNotificationBanner>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slide;
+  late Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
+    _controller.forward();
+
+    Future.delayed(widget.duration, _dismiss);
+  }
+
+  void _dismiss() async {
+    if (!mounted) return;
+    await _controller.reverse();
+    widget.onDismiss();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+    return Positioned(
+      top: topPadding + 12,
+      left: 16,
+      right: 16,
+      child: SlideTransition(
+        position: _slide,
+        child: FadeTransition(
+          opacity: _fade,
+          child: Material(
+            elevation: 8,
+            shadowColor: widget.backgroundColor.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: widget.backgroundColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(widget.icon, color: widget.foregroundColor, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.message,
+                      style: TextStyle(
+                        color: widget.foregroundColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _dismiss,
+                    child: Icon(Icons.close_rounded,
+                        color: widget.foregroundColor.withOpacity(0.8), size: 20),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -386,12 +386,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       // Google sign in
                       OutlinedButton.icon(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Google Sign-In would be implemented here'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                          AppTheme.showTopNotification(
+                          context,
+                          'Google Sign-In coming soon.',
+                          type: NotificationType.info,
+                        );
                         },
                         icon: const Icon(Icons.g_mobiledata, size: 28),
                         label: const Text('Continue with Google'),

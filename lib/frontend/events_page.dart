@@ -361,11 +361,10 @@ class _EventsPageState extends State<EventsPage> {
             onPressed: () {
               dataProvider.deleteEvent(event.id);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Event deleted'),
-                  behavior: SnackBarBehavior.floating,
-                ),
+              AppTheme.showTopNotification(
+                context,
+                'Event deleted.',
+                type: NotificationType.info,
               );
             },
             style: FilledButton.styleFrom(

@@ -57,13 +57,10 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                 }
                 
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(editCategory == null
-                        ? 'Category added'
-                        : 'Category updated'),
-                    backgroundColor: AppTheme.successGreen,
-                  ),
+                AppTheme.showTopNotification(
+                  context,
+                  editCategory == null ? 'Category added.' : 'Category updated.',
+                  type: NotificationType.success,
                 );
               }
             },
@@ -90,11 +87,10 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
             onPressed: () {
               dataProvider.deleteCategory(category.id);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Category deleted'),
-                  backgroundColor: Colors.red,
-                ),
+              AppTheme.showTopNotification(
+                context,
+                'Category deleted.',
+                type: NotificationType.info,
               );
             },
             style: FilledButton.styleFrom(backgroundColor: AppTheme.errorRed),

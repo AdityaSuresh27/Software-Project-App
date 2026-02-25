@@ -438,12 +438,10 @@ class _AttendancePageState extends State<AttendancePage> {
               await dataProvider.resetAttendance();
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('All attendance records cleared'),
-                    backgroundColor: AppTheme.successGreen,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                AppTheme.showTopNotification(
+                  context,
+                  'All attendance records have been cleared.',
+                  type: NotificationType.success,
                 );
               }
             },

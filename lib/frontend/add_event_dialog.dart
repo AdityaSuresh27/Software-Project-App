@@ -224,12 +224,10 @@ class _AddEventDialogState extends State<AddEventDialog>
             _reminders.sort();
           });
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Reminder must be before event start time'),
-              backgroundColor: AppTheme.errorRed,
-              behavior: SnackBarBehavior.floating,
-            ),
+          AppTheme.showTopNotification(
+            context,
+            'Reminder must be set before the event starts.',
+            type: NotificationType.warning,
           );
         }
       }
@@ -273,13 +271,11 @@ class _AddEventDialogState extends State<AddEventDialog>
 void _saveEvent() {
   // Remove form validation dependency - allow saving from any tab
   if (_titleController.text.trim().isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Event title is required'),
-        backgroundColor: AppTheme.errorRed,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppTheme.showTopNotification(
+        context,
+        'Please enter an event title before saving.',
+        type: NotificationType.error,
+      );
     // Switch to details tab to show the error
     _tabController.animateTo(0);
     return;
