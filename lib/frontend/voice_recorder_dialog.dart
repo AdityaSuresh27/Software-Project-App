@@ -30,7 +30,6 @@ class _VoiceRecorderDialogState extends State<VoiceRecorderDialog> {
   bool _isPaused = false;
   Duration _duration = Duration.zero;
   Timer? _timer;
-  String? _recordingPath;
   final _tagsController = TextEditingController();
   final List<String> _tags = [];
 
@@ -71,7 +70,6 @@ class _VoiceRecorderDialogState extends State<VoiceRecorderDialog> {
         
         setState(() {
           _isRecording = true;
-          _recordingPath = filePath;
           _duration = Duration.zero;
         });
 

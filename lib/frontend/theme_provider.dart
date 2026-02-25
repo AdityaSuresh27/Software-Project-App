@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light; // Changed default to light
-  bool _isInitialized = false;
 
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
@@ -30,7 +29,6 @@ class ThemeProvider extends ChangeNotifier {
         _themeMode = ThemeMode.light; // Changed default
     }
     
-    _isInitialized = true;
     notifyListeners();
   }
 

@@ -1,7 +1,6 @@
 // attendance_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../backend/data_provider.dart';
 import '../backend/timetable_models.dart';
 import 'theme.dart';
@@ -57,12 +56,9 @@ class _AttendancePageState extends State<AttendancePage> {
     ],
   ),
   actions: [
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'reset') {
-                    _showResetConfirmation(context, dataProvider);
-                  }
-                },
+              AppPopupMenuButton<String>(
+                tooltip: 'Options',
+                iconData: Icons.more_vert_rounded,
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'reset',
@@ -75,6 +71,11 @@ class _AttendancePageState extends State<AttendancePage> {
                     ),
                   ),
                 ],
+                onSelected: (value) {
+                  if (value == 'reset') {
+                    _showResetConfirmation(context, dataProvider);
+                  }
+                },
               ),
             ],
           ),

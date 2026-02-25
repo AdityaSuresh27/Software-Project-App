@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'theme.dart';
-import 'add_event_dialog.dart';
 import '../backend/data_provider.dart';
 import '../backend/models.dart';
 import 'event_action_dialog.dart';

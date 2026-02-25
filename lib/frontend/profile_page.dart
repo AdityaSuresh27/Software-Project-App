@@ -7,7 +7,6 @@ import 'auth_screen.dart';
 import '../backend/data_provider.dart';
 import 'manage_categories_page.dart';
 import 'privacy_policy_page.dart';
-import 'otp_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -407,24 +406,5 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildDropdownTile(
-    String title,
-    String value,
-    List<String> options,
-    ValueChanged<String?> onChanged,
-    IconData icon,
-  ) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: DropdownButton<String>(
-        value: value,
-        underline: const SizedBox(),
-        items: options.map((option) {
-          return DropdownMenuItem(value: option, child: Text(option));
-        }).toList(),
-        onChanged: onChanged,
-      ),
-    );
-  }
+
 }

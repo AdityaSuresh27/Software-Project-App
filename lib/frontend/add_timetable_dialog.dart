@@ -360,24 +360,14 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
                       const SizedBox(height: 16),
 
                       // Period duration
-DropdownButtonFormField<int>(
+AppDropdown<int>(
   value: _periodDurationMinutes,
-  decoration: _buildInputDecoration('Period Duration', Icons.timer_outlined),
-  dropdownColor: Theme.of(context).cardColor,
-  borderRadius: BorderRadius.circular(12),
-  icon: Icon(Icons.arrow_drop_down_rounded, color: _selectedColor, size: 28),
-  items: _durationOptions.map((minutes) {
-    return DropdownMenuItem(
-      value: minutes,
-      child: Text(_formatDuration(minutes)),
-    );
-  }).toList(),
-  onChanged: (value) {
-    setState(() {
-      _periodDurationMinutes = value!;
-    });
-  },
-),
+  label: 'Period Duration',
+  prefixIcon: Icons.timer_outlined,
+  accentColor: _selectedColor,
+  items: _durationOptions.map((m) => AppDropdownItem(value: m, label: _formatDuration(m))).toList(),
+  onChanged: (value) => setState(() => _periodDurationMinutes = value!),
+), 
                       const SizedBox(height: 16),
 
                       // Calculated end time (display only)
@@ -409,38 +399,70 @@ DropdownButtonFormField<int>(
                       const SizedBox(height: 20),
 
                       // Category
-DropdownButtonFormField<String?>(
-  value: _selectedCategory,
-  decoration: _buildInputDecoration('Category (Optional)', Icons.folder_outlined),
-  dropdownColor: Theme.of(context).cardColor,
-  borderRadius: BorderRadius.circular(12),
-  icon: Icon(Icons.arrow_drop_down_rounded, color: _selectedColor, size: 28),
-  items: [
-    DropdownMenuItem<String?>(
-      value: null, 
+AppPopupMenuButton<String?>(
+  tooltip: 'Select Category',
+  child: Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: _selectedColor.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.folder_outlined, color: _selectedColor),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            _selectedCategory == null
+                ? 'No category'
+                : dataProvider.categories
+                    .firstWhere((c) => c.id == _selectedCategory)
+                    .name,
+            style: const TextStyle(fontSize: 16),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: _selectedColor,
+        ),
+      ],
+    ),
+  ),
+  itemBuilder: (context) => <PopupMenuEntry<String?>>[
+    const PopupMenuItem<String?>(
+      value: null,
       child: Row(
         children: [
-          Icon(Icons.block, size: 18, color: AppTheme.otherGray),
-          const SizedBox(width: 12),
-          const Text('No category'),
+          Icon(Icons.block, color: AppTheme.otherGray),
+          SizedBox(width: 8),
+          Text('No category'),
         ],
       ),
     ),
     ...dataProvider.categories.map((category) {
-      return DropdownMenuItem<String>(
+      Color? iconCol;
+      if (category.color != null) {
+        try {
+          iconCol = Color(int.parse(category.color!.replaceFirst('#', '0xFF')));
+        } catch (_) {}
+      }
+      return PopupMenuItem<String?>(
         value: category.id,
         child: Row(
           children: [
-            Icon(Icons.folder, size: 18, color: _selectedColor.withOpacity(0.7)),
-            const SizedBox(width: 12),
-            Text(category.name),
+            Icon(Icons.folder, color: iconCol),
+            const SizedBox(width: 8),
+            Expanded(child: Text(category.name)),
           ],
         ),
       );
-    }),
+    }).toList(),
   ],
-  onChanged: (value) => setState(() => _selectedCategory = value),
-),
+  onSelected: (value) => setState(() => _selectedCategory = value),
+), 
                       const SizedBox(height: 20),
 
                       // Date Range

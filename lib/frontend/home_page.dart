@@ -4,14 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'add_event_dialog.dart';
-import 'voice_recorder_dialog.dart';
 import 'calendar_page.dart';
 import 'events_page.dart';
 import '../backend/data_provider.dart';
 import '../backend/models.dart';
 import 'timetable_page.dart';
 import 'attendance_page.dart';
-import 'add_timetable_dialog.dart';
 import 'event_action_dialog.dart';
 
 class HomePage extends StatefulWidget {

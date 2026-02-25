@@ -46,12 +46,9 @@ class ClassAttendanceDetailsPage extends StatelessWidget {
             title: Text(courseName),
             actions: [
               if (allRecords.isNotEmpty)
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'clear') {
-                      _showClearConfirmation(context, dataProvider);
-                    }
-                  },
+                AppPopupMenuButton<String>(
+                  tooltip: 'Options',
+                  iconData: Icons.more_vert_rounded,
                   itemBuilder: (context) => [
                     const PopupMenuItem(
                       value: 'clear',
@@ -64,6 +61,11 @@ class ClassAttendanceDetailsPage extends StatelessWidget {
                       ),
                     ),
                   ],
+                  onSelected: (value) {
+                    if (value == 'clear') {
+                      _showClearConfirmation(context, dataProvider);
+                    }
+                  },
                 ),
             ],
           ),
@@ -311,14 +313,17 @@ Widget _buildRecordCard(
               ],
             ),
           ),
-PopupMenuButton<String>(
+AppPopupMenuButton<String>(
+  iconData: Icons.more_vert_rounded,
+  backgroundColor: color.withOpacity(0.08),
+  iconColor: color,
+  iconSize: 18,
   onSelected: (value) {
     if (value == 'edit') {
       _showEditAttendanceDialog(context, record, dataProvider);
     } else if (value == 'unmark') {
       _showUnmarkConfirmation(context, record, dataProvider);
     } else if (value == 'delete') {
-      dataProvider.deleteAttendanceRecord(record.id);
       dataProvider.deleteAttendanceRecord(record.id);
       AppTheme.showTopNotification(
         context,

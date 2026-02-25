@@ -485,3 +485,170 @@ class _TopNotificationBannerState extends State<_TopNotificationBanner>
     );
   }
 }
+
+/// A polished branded dropdown that replaces Flutter's default DropdownButtonFormField
+/// everywhere in the app. Uses the same border/fill style as the rest of the form fields.
+class AppDropdown<T> extends StatelessWidget {
+  final T? value;
+  final String label;
+  final IconData prefixIcon;
+  final List<AppDropdownItem<T>> items;
+  final ValueChanged<T?> onChanged;
+  final Color? accentColor;
+  final String? Function(T?)? validator;
+
+  const AppDropdown({
+    super.key,
+    required this.value,
+    required this.label,
+    required this.prefixIcon,
+    required this.items,
+    required this.onChanged,
+    this.accentColor,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = accentColor ?? AppTheme.primaryBlue;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return DropdownButtonFormField<T>(
+      value: value,
+      validator: validator,
+      style: TextStyle(
+        fontSize: 16,
+        color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF111827),
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 15),
+        prefixIcon: Icon(prefixIcon, color: color),
+        filled: true,
+        fillColor: color.withOpacity(0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: color.withOpacity(0.3), width: 1.8),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: color.withOpacity(0.3), width: 1.8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: color, width: 2.2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: AppTheme.errorRed,
+            width: 1.8,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppTheme.errorRed, width: 2.2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      ),
+      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: color, size: 26),
+      isExpanded: true,
+      items: items.map((item) {
+        return DropdownMenuItem<T>(
+          value: item.value,
+          child: Row(
+            children: [
+              if (item.icon != null) ...[
+                Icon(item.icon, size: 18, color: item.iconColor ?? color),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }
+}
+
+class AppDropdownItem<T> {
+  final T value;
+  final String label;
+  final IconData? icon;
+  final Color? iconColor;
+
+  const AppDropdownItem({
+    required this.value,
+    required this.label,
+    this.icon,
+    this.iconColor,
+  });
+}
+
+/// A styled popup menu button used throughout the app. It mimics the design of
+/// the “Options” menu on the Timetable page app bar: an icon inside a rounded
+/// container with a light translucent background. Parameters allow customizing
+/// the icon, colors, and tooltip while preserving the common shape and padding.
+class AppPopupMenuButton<T> extends StatelessWidget {
+  /// Builds the list of menu entries. Use the same signature as
+  /// `PopupMenuButton.itemBuilder` to avoid type mismatches.
+  final PopupMenuItemBuilder<T> itemBuilder;
+  final void Function(T)? onSelected;
+  final IconData iconData;
+  final String? tooltip;
+  final Color iconColor;
+  final Color backgroundColor;
+  final double iconSize;
+  final ShapeBorder shape;
+  /// Optional child widget which will be wrapped by the button instead of
+  /// the default icon container. This allows the caller to provide a custom
+  /// field (e.g. an InputDecorator) while still using the styled popup logic.
+  final Widget? child;
+
+  const AppPopupMenuButton({
+    super.key,
+    required this.itemBuilder,
+    this.onSelected,
+    this.iconData = Icons.more_vert_rounded,
+    this.tooltip,
+    this.iconColor = Colors.white,
+    this.backgroundColor = const Color(0x26ffffff), // white with 15% opacity
+    this.iconSize = 20,
+    this.shape = const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(16)),
+    ),
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<T>(
+      tooltip: tooltip,
+      shape: shape,
+      onSelected: onSelected,
+      itemBuilder: itemBuilder,
+      // if a custom child is supplied, use it; otherwise fall back to the
+      // styled icon container used previously.
+      child: child,
+      icon: child == null
+          ? Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(iconData, color: iconColor, size: iconSize),
+            )
+          : null,
+    );
+  }
+}

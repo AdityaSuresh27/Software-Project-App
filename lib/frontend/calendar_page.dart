@@ -77,11 +77,9 @@ class _CalendarPageState extends State<CalendarPage> {
     ],
   ),
   actions: [
-              PopupMenuButton<CalendarFormat>(
-                icon: const Icon(Icons.view_module_outlined),
-                onSelected: (format) {
-                  setState(() => _calendarFormat = format);
-                },
+              AppPopupMenuButton<CalendarFormat>(
+                tooltip: 'Options',
+                iconData: Icons.view_module_outlined,
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: CalendarFormat.month,
@@ -96,6 +94,9 @@ class _CalendarPageState extends State<CalendarPage> {
                     child: Text('Week View'),
                   ),
                 ],
+                onSelected: (format) {
+                  setState(() => _calendarFormat = format);
+                },
               ),
             ],
           ),
@@ -308,8 +309,11 @@ class _CalendarPageState extends State<CalendarPage> {
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
+              AppPopupMenuButton<String>(
+                iconData: Icons.more_vert,
+                iconColor: color,
+                backgroundColor: color.withOpacity(0.08),
+                iconSize: 18,
                 onSelected: (value) {
                   if (value == 'edit') {
                     showDialog(

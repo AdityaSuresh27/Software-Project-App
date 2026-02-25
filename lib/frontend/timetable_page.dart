@@ -198,24 +198,9 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: PopupMenuButton<String>(
+                      child: AppPopupMenuButton<String>(
                         tooltip: 'Options',
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.more_vert_rounded, color: Colors.white, size: 20),
-                        ),
-                        onSelected: (value) {
-                          if (value == 'reset') {
-                            _showResetConfirmation(context, dataProvider);
-                          }
-                        },
+                        iconData: Icons.more_vert_rounded,
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'reset',
@@ -231,6 +216,11 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
                             ),
                           ),
                         ],
+                        onSelected: (value) {
+                          if (value == 'reset') {
+                            _showResetConfirmation(context, dataProvider);
+                          }
+                        },
                       ),
                     ),
                   ],
@@ -614,28 +604,11 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
                         ),
                       
                       // Menu button
-                      PopupMenuButton<String>(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        icon: Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(Icons.more_vert_rounded, color: color, size: 18),
-                        ),
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AddTimetableDialog(editEntry: entry),
-                            );
-                          } else if (value == 'delete') {
-                            _showDeleteDialog(context, entry, dataProvider);
-                          }
-                        },
+                      AppPopupMenuButton<String>(
+                        iconData: Icons.more_vert_rounded,
+                        iconColor: color,
+                        backgroundColor: color.withOpacity(0.08),
+                        iconSize: 18,
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'edit',
@@ -658,6 +631,16 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
                             ),
                           ),
                         ],
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AddTimetableDialog(editEntry: entry),
+                            );
+                          } else if (value == 'delete') {
+                            _showDeleteDialog(context, entry, dataProvider);
+                          }
+                        },
                       ),
                     ],
                   ),

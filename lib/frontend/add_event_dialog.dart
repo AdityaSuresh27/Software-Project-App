@@ -578,40 +578,70 @@ void _saveEvent() {
             const SizedBox(height: 20),
 
 
-DropdownButtonFormField<String?>(
-  value: _selectedCategory,
-  style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
-  decoration: _buildInputDecoration(
-      'Category (Optional)', Icons.folder_outlined),
-  dropdownColor: Theme.of(context).cardColor,
-  borderRadius: BorderRadius.circular(12),
-  icon: Icon(Icons.arrow_drop_down_rounded, color: color, size: 28),
-  items: [
-    DropdownMenuItem<String?>(
+AppPopupMenuButton<String?>(
+  tooltip: 'Select Category',
+  child: Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.folder_outlined, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            _selectedCategory == null
+                ? 'No category'
+                : dataProvider.categories
+                    .firstWhere((c) => c.id == _selectedCategory)
+                    .name,
+            style: const TextStyle(fontSize: 16),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: color,
+        ),
+      ],
+    ),
+  ),
+  itemBuilder: (context) => <PopupMenuEntry<String?>>[
+    const PopupMenuItem<String?>(
       value: null,
       child: Row(
         children: [
-          Icon(Icons.block, size: 18, color: AppTheme.otherGray),
-          const SizedBox(width: 12),
-          const Text('No category'),
+          Icon(Icons.block, color: AppTheme.otherGray),
+          SizedBox(width: 8),
+          Text('No category'),
         ],
       ),
     ),
     ...dataProvider.categories.map((category) {
-      return DropdownMenuItem<String>(
+      Color? iconCol;
+      if (category.color != null) {
+        try {
+          iconCol = Color(int.parse(category.color!.replaceFirst('#', '0xFF')));
+        } catch (_) {}
+      }
+      return PopupMenuItem<String?>(
         value: category.id,
         child: Row(
           children: [
-            Icon(Icons.folder, size: 18, color: color.withOpacity(0.7)),
-            const SizedBox(width: 12),
-            Text(category.name),
+            Icon(Icons.folder, color: iconCol),
+            const SizedBox(width: 8),
+            Expanded(child: Text(category.name)),
           ],
         ),
       );
-    }),
+    }).toList(),
   ],
-  onChanged: (value) => setState(() => _selectedCategory = value),
-),
+  onSelected: (value) => setState(() => _selectedCategory = value),
+),     
             const SizedBox(height: 20),
 
             InkWell(
@@ -647,22 +677,13 @@ DropdownButtonFormField<String?>(
             ],
 
             if (_isTaskType) ...[
-DropdownButtonFormField<String>(
+AppDropdown<String>(
   value: _estimatedDuration,
-  style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
-  decoration: _buildInputDecoration(
-      'Estimated Duration', Icons.timer_outlined),
-  dropdownColor: Theme.of(context).cardColor,
-  borderRadius: BorderRadius.circular(12),
-  icon: Icon(Icons.arrow_drop_down_rounded, color: color, size: 28),
-  items: _durations.map((duration) {
-    return DropdownMenuItem(
-      value: duration,
-      child: Text(duration),
-    );
-  }).toList(),
-  onChanged: (value) =>
-      setState(() => _estimatedDuration = value!),
+  label: 'Estimated Duration',
+  prefixIcon: Icons.timer_outlined,
+  accentColor: color,
+  items: _durations.map((d) => AppDropdownItem(value: d, label: d)).toList(),
+  onChanged: (value) => setState(() => _estimatedDuration = value!),
 ),
               const SizedBox(height: 20),
             ],

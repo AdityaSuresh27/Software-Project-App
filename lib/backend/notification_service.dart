@@ -6,7 +6,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import '../main.dart'; // for navigatorKey
 import '../frontend/event_action_dialog.dart';
-import '../backend/models.dart';
 import '../backend/data_provider.dart';
 import 'package:provider/provider.dart';
 

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import 'theme.dart';
 import 'add_event_dialog.dart';
 import '../backend/data_provider.dart';
@@ -75,16 +74,17 @@ class _EventsPageState extends State<EventsPage> {
     ],
   ),
   actions: [
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.sort),
-                onSelected: (value) {
-                  setState(() => _sortBy = value);
-                },
+              AppPopupMenuButton<String>(
+                tooltip: 'Sort',
+                iconData: Icons.sort,
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'date', child: Text('Sort by Date')),
                   const PopupMenuItem(value: 'priority', child: Text('Sort by Priority')),
                   const PopupMenuItem(value: 'classification', child: Text('Sort by Type')),
                 ],
+                onSelected: (value) {
+                  setState(() => _sortBy = value);
+                },
               ),
             ],
           ),
