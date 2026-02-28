@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../backend/data_provider.dart';
+import '../backend/models.dart';
 import '../backend/timetable_models.dart';
 import 'theme.dart';
 
@@ -505,6 +506,23 @@ void _showMarkAttendanceDialog(
     AttendanceStatus.cancelled,
   ];
   
+  // Get the event for this date to retrieve periodCount
+  final allClassEvents = dataProvider.getClassEventsForCourse(courseName);
+  Event? eventForDate;
+  
+  try {
+    eventForDate = allClassEvents.firstWhere(
+      (event) =>
+          event.startTime.year == date.year &&
+          event.startTime.month == date.month &&
+          event.startTime.day == date.day,
+    );
+  } catch (e) {
+    eventForDate = null;
+  }
+  
+  final periodCount = eventForDate?.periodCount ?? 1;
+  
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
@@ -524,6 +542,7 @@ void _showMarkAttendanceDialog(
                   courseName: courseName,
                   date: date,
                   status: status,
+                  periodCount: periodCount,
                 );
                 dataProvider.markAttendance(record);
                 Navigator.pop(context);

@@ -514,7 +514,7 @@ class AppDropdown<T> extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       validator: validator,
       style: TextStyle(
         fontSize: 16,

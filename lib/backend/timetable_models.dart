@@ -14,6 +14,8 @@ class TimetableEntry {
   DateTime? semesterStart;
   DateTime? semesterEnd;
   List<String> excludedDates; // ISO strings for holidays/breaks
+  int periodCount; // How many periods this entry counts for (default 1)
+
 
   TimetableEntry({
     required this.id,
@@ -29,6 +31,7 @@ class TimetableEntry {
     DateTime? semesterStart,
     DateTime? semesterEnd,
     this.excludedDates = const [],
+    this.periodCount = 1,
   }) : semesterStart = semesterStart ?? DateTime.now(),
        semesterEnd = semesterEnd ?? DateTime.now().add(const Duration(days: 180)); // Default 6 months
 
@@ -46,6 +49,7 @@ class TimetableEntry {
         'semesterStart': semesterStart?.toIso8601String(),
         'semesterEnd': semesterEnd?.toIso8601String(),
         'excludedDates': excludedDates,
+        'periodCount': periodCount,
       };
 
   factory TimetableEntry.fromJson(Map<String, dynamic> json) {
@@ -76,6 +80,7 @@ class TimetableEntry {
           ? DateTime.parse(json['semesterEnd'])
           : null,
       excludedDates: List<String>.from(json['excludedDates'] ?? []),
+      periodCount: json['periodCount'] ?? 1,
     );
   }
 
@@ -93,6 +98,7 @@ class TimetableEntry {
     DateTime? semesterStart,
     DateTime? semesterEnd,
     List<String>? excludedDates,
+    int? periodCount,
   }) {
     return TimetableEntry(
       id: id ?? this.id,
@@ -108,6 +114,7 @@ class TimetableEntry {
       semesterStart: semesterStart ?? this.semesterStart,
       semesterEnd: semesterEnd ?? this.semesterEnd,
       excludedDates: excludedDates ?? this.excludedDates,
+      periodCount: periodCount ?? this.periodCount,
     );
   }
 }
@@ -118,6 +125,7 @@ class AttendanceRecord {
   final DateTime date;
   AttendanceStatus status;
   String? notes;
+  int periodCount; // How many periods this attendance record counts for
 
   AttendanceRecord({
     required this.id,
@@ -125,6 +133,7 @@ class AttendanceRecord {
     required this.date,
     required this.status,
     this.notes,
+    this.periodCount = 1,
   });
 
   Map<String, dynamic> toJson() => {
@@ -133,6 +142,7 @@ class AttendanceRecord {
         'date': date.toIso8601String(),
         'status': status.toString().split('.').last,
         'notes': notes,
+        'periodCount': periodCount,
       };
 
   factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
@@ -145,6 +155,7 @@ class AttendanceRecord {
         orElse: () => AttendanceStatus.present,
       ),
       notes: json['notes'],
+      periodCount: json['periodCount'] ?? 1,
     );
   }
 }

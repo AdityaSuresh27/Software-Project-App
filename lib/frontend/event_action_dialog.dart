@@ -344,6 +344,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
       courseName: event.title,
       date: event.startTime,
       status: status,
+      periodCount: event.periodCount,
     );
     
     dataProvider.markAttendance(record);

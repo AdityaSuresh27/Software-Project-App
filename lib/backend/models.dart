@@ -17,6 +17,7 @@ class Event {
   bool isImportant; // Star/flag for emphasis
   List<DateTime> reminders;
   String? color; // Custom color override
+  int periodCount; // How many periods/classes this event counts for (default 1)
   Map<String, dynamic>? metadata; // Flexible field for future extensions
 
   Event({
@@ -37,6 +38,7 @@ class Event {
     this.isImportant = false,
     this.reminders = const [],
     this.color,
+    this.periodCount = 1,
     this.metadata,
   });
 
@@ -66,6 +68,7 @@ class Event {
     'isImportant': isImportant,
     'reminders': reminders.map((r) => r.toIso8601String()).toList(),
     'color': color,
+    'periodCount': periodCount,
     'metadata': metadata,
   };
 
@@ -87,6 +90,7 @@ class Event {
     isImportant: json['isImportant'] ?? false,
     reminders: (json['reminders'] as List?)?.map((r) => DateTime.parse(r as String)).toList() ?? [],
     color: json['color'],
+    periodCount: json['periodCount'] ?? 1,
     metadata: json['metadata'],
   );
 
@@ -109,6 +113,7 @@ class Event {
       isImportant: isImportant,
       reminders: List.from(reminders),
       color: color,
+      periodCount: periodCount,
       metadata: metadata != null ? Map.from(metadata!) : null,
     );
   }

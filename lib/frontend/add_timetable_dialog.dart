@@ -28,6 +28,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
   int _periodDurationMinutes = 60; // Default 1 hour
   String? _selectedCategory;
   Color _selectedColor = AppTheme.classBlue;
+  int _periodCount = 1;
 
   DateTime? _semesterStart;
   DateTime? _semesterEnd;
@@ -48,6 +49,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
       _selectedCategory = widget.editEntry!.category;
       _semesterStart = widget.editEntry!.semesterStart;
       _semesterEnd = widget.editEntry!.semesterEnd;
+      _periodCount = widget.editEntry!.periodCount;
       
       if (widget.editEntry!.color != null) {
         _selectedColor = Color(int.parse(widget.editEntry!.color!.replaceFirst('#', '0xFF')));
@@ -124,6 +126,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
           color: '#${_selectedColor.value.toRadixString(16).substring(2)}',
           semesterStart: _semesterStart,
           semesterEnd: _semesterEnd,
+          periodCount: _periodCount,
         );
         dataProvider.addTimetableEntry(entry);
         
@@ -181,6 +184,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
                 semesterStart: _semesterStart,
                 semesterEnd: _semesterEnd,
                 excludedDates: widget.editEntry!.excludedDates,
+                periodCount: _periodCount,
               );
               dataProvider.updateTimetableEntry(updated);
               
@@ -559,6 +563,61 @@ AppPopupMenuButton<String?>(
                         ),
                       ),
                       
+                      const SizedBox(height: 20),
+
+                      // Period Count and Attendance Worth
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Periods',
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: _periodCount > 1
+                                          ? () => setState(() => _periodCount--)
+                                          : null,
+                                      icon: const Icon(Icons.remove),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: _selectedColor.withOpacity(0.1),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Center(
+                                        child: Text(
+                                          _periodCount.toString(),
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () =>
+                                          setState(() => _periodCount++),
+                                      icon: const Icon(Icons.add),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: _selectedColor.withOpacity(0.1),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
                       const SizedBox(height: 20),
 
                       // Color picker

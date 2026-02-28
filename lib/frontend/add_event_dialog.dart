@@ -46,6 +46,7 @@ class _AddEventDialogState extends State<AddEventDialog>
   List<VoiceNote> _voiceNotes = [];
   List<DateTime> _reminders = [];
   String? _customColor;
+  int _periodCount = 1;
 
   final List<String> _classifications = [
     'class',
@@ -92,6 +93,7 @@ class _AddEventDialogState extends State<AddEventDialog>
       _voiceNotes = List.from(widget.editEvent!.voiceNotes);
       _reminders = List.from(widget.editEvent!.reminders);
       _customColor = widget.editEvent!.color;
+      _periodCount = widget.editEvent!.periodCount;
     } else {
       _startTime = widget.selectedDate ?? DateTime.now();
       _endTime = _startTime!.add(const Duration(hours: 1));
@@ -303,6 +305,7 @@ void _saveEvent() async {
     widget.editEvent!.voiceNotes = _voiceNotes;
     widget.editEvent!.reminders = _reminders;
     widget.editEvent!.color = _customColor;
+    widget.editEvent!.periodCount = _periodCount;
     dataProvider.updateEvent(widget.editEvent!);
   } else {
     final event = Event(
@@ -324,6 +327,7 @@ void _saveEvent() async {
       voiceNotes: _voiceNotes,
       reminders: _reminders,
       color: _customColor,
+      periodCount: _periodCount,
     );
     dataProvider.addEvent(event);
     
@@ -773,6 +777,81 @@ AppDropdown<String>(
             }).toList(),
           ),
           const SizedBox(height: 24),
+
+          // Period Count (for class events) - determines attendance worth on completion
+          if (_selectedClassification == 'class') ...[
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Periods/Classes Count',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'If absent, you will lose attendance for this many periods',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: _periodCount > 1
+                          ? () => setState(() => _periodCount--)
+                          : null,
+                      icon: const Icon(Icons.remove),
+                      style: IconButton.styleFrom(
+                        backgroundColor:
+                            color.withOpacity(0.1),
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: color.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            _periodCount.toString(),
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () =>
+                          setState(() => _periodCount++),
+                      icon: const Icon(Icons.add),
+                      style: IconButton.styleFrom(
+                        backgroundColor:
+                            color.withOpacity(0.1),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
 
           Container(
             decoration: BoxDecoration(
