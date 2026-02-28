@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'theme.dart';
 import 'add_event_dialog.dart';
 import '../backend/data_provider.dart';
@@ -205,8 +206,19 @@ class _EventsPageState extends State<EventsPage> {
         children: [
           if (event.isTask)
             SlidableAction(
-              onPressed: (context) {
+              onPressed: (context) async {
+                final wasCompleted = event.isCompleted;
                 dataProvider.toggleEventComplete(event.id);
+                
+                // Play completion sound when task is marked complete
+                if (!wasCompleted) {
+                  final audioPlayer = AudioPlayer();
+                  try {
+                    await audioPlayer.play(AssetSource('accept2.mp3'));
+                  } catch (e) {
+                    debugPrint('Error playing accept2.mp3: $e');
+                  }
+                }
               },
               backgroundColor: AppTheme.successGreen,
               foregroundColor: Colors.white,

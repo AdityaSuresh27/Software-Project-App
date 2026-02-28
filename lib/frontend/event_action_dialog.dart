@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../backend/data_provider.dart';
 import '../backend/models.dart';
 import '../backend/timetable_models.dart';
@@ -238,8 +239,19 @@ Widget _buildClassActions(BuildContext context, Color color) {
           width: double.infinity,
           height: 56,
           child: FilledButton.icon(
-            onPressed: () {
+            onPressed: () async {
               dataProvider.toggleEventComplete(event.id);
+              
+              // Play completion sound when event is marked complete
+              if (!isCompleted) {
+                final audioPlayer = AudioPlayer();
+                try {
+                  await audioPlayer.play(AssetSource('accept2.mp3'));
+                } catch (e) {
+                  debugPrint('Error playing accept2.mp3: $e');
+                }
+              }
+              
               Navigator.pop(context);
               
               AppTheme.showTopNotification(
@@ -324,7 +336,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
     }
   }
 
-  void _markAttendance(BuildContext context, AttendanceStatus status) {
+  void _markAttendance(BuildContext context, AttendanceStatus status) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     
     final record = AttendanceRecord(
@@ -340,6 +352,14 @@ Widget _buildClassActions(BuildContext context, Color color) {
     event.completionColor = '#${_getAttendanceColor(status).value.toRadixString(16).substring(2)}';
     event.isCompleted = true; 
     dataProvider.updateEvent(event);
+    
+    // Play completion sound when attendance is marked
+    final audioPlayer = AudioPlayer();
+    try {
+      await audioPlayer.play(AssetSource('accept2.mp3'));
+    } catch (e) {
+      debugPrint('Error playing accept2.mp3: $e');
+    }
     
     Navigator.pop(context);
     

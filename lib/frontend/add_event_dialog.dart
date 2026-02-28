@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../backend/data_provider.dart';
 import '../backend/models.dart';
 import 'theme.dart';
@@ -268,7 +269,7 @@ class _AddEventDialogState extends State<AddEventDialog>
     }
   }
 
-void _saveEvent() {
+void _saveEvent() async {
   // Remove form validation dependency - allow saving from any tab
   if (_titleController.text.trim().isEmpty) {
     AppTheme.showTopNotification(
@@ -282,6 +283,7 @@ void _saveEvent() {
   }
 
   final dataProvider = Provider.of<DataProvider>(context, listen: false);
+  final audioPlayer = AudioPlayer();
 
   if (widget.editEvent != null) {
     widget.editEvent!.title = _titleController.text;
@@ -324,6 +326,13 @@ void _saveEvent() {
       color: _customColor,
     );
     dataProvider.addEvent(event);
+    
+    // Play accept sound when event is created
+    try {
+      await audioPlayer.play(AssetSource('accept1.mp3'));
+    } catch (e) {
+      debugPrint('Error playing accept1.mp3: $e');
+    }
   }
 
   Navigator.pop(context);

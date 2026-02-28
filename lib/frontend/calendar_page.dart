@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'theme.dart';
 import 'add_event_dialog.dart';
 import '../backend/data_provider.dart';
@@ -367,9 +368,18 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  void _duplicateEvent(BuildContext context, Event event, DataProvider dataProvider) {
+  void _duplicateEvent(BuildContext context, Event event, DataProvider dataProvider) async {
     final duplicatedEvent = event.duplicate();
     dataProvider.addEvent(duplicatedEvent);
+    
+    // Play accept sound when event is duplicated (created)
+    final audioPlayer = AudioPlayer();
+    try {
+      await audioPlayer.play(AssetSource('accept1.mp3'));
+    } catch (e) {
+      debugPrint('Error playing accept1.mp3: $e');
+    }
+    
     AppTheme.showTopNotification(
       context,
       'Event duplicated.',
