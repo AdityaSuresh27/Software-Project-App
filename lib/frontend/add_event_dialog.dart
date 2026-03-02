@@ -372,7 +372,20 @@ void _saveEvent() async {
           maxHeight: MediaQuery.of(context).size.height * 0.9,
           maxWidth: 600,
         ),
-        child: Column(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: 0.9 + (0.1 * value),
+              child: Opacity(
+                opacity: value,
+                child: child,
+              ),
+            );
+          },
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header with gradient
@@ -524,6 +537,7 @@ void _saveEvent() async {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -14,13 +14,45 @@ class TimelinePage extends StatefulWidget {
   State<TimelinePage> createState() => _TimelinePageState();
 }
 
-class _TimelinePageState extends State<TimelinePage> {
+class _TimelinePageState extends State<TimelinePage>
+    with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   DateTime _selectedDate = DateTime.now();
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
+    
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeController.forward();
+    _slideController.forward();
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentTime();
     });
@@ -28,6 +60,8 @@ class _TimelinePageState extends State<TimelinePage> {
 
   @override
   void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -121,23 +155,29 @@ class _TimelinePageState extends State<TimelinePage> {
                 ),
             ],
           ),
-          body: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(16),
-            itemCount: 24,
-            itemBuilder: (context, index) {
-              final hour = index;
-              final isCurrentHour = isToday && hour == now.hour;
-              
-              return _buildTimelineBlock(context, hour, isCurrentHour, dataProvider);
-            },
+          body: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: 24,
+                itemBuilder: (context, index) {
+                  final hour = index;
+                  final isCurrentHour = isToday && hour == now.hour;
+                  
+                  return _buildTimelineBlock(context, hour, isCurrentHour, dataProvider, index);
+                },
+              ),
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildTimelineBlock(BuildContext context, int hour, bool isCurrentHour, DataProvider dataProvider) {
+  Widget _buildTimelineBlock(BuildContext context, int hour, bool isCurrentHour, DataProvider dataProvider, int index) {
     final blockTime = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -151,7 +191,20 @@ class _TimelinePageState extends State<TimelinePage> {
     
     final hasItems = events.isNotEmpty;
     
-    return Row(
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 300 + (index * 50)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Time label
@@ -216,6 +269,7 @@ class _TimelinePageState extends State<TimelinePage> {
               : const SizedBox(height: 70),
         ),
       ],
+    ),
     );
   }
 
@@ -252,7 +306,20 @@ class _TimelinePageState extends State<TimelinePage> {
         );
       },
       borderRadius: BorderRadius.circular(12),
-      child: Container(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: 0.95 + (0.05 * value),
+            child: Opacity(
+              opacity: value,
+              child: child,
+            ),
+          );
+        },
+        child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -360,8 +427,7 @@ class _TimelinePageState extends State<TimelinePage> {
                 ),
               ),
           ],
-        ),
-      ),
+        ),        ),      ),
     );
   }
 }

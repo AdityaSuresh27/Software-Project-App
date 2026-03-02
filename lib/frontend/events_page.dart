@@ -34,10 +34,54 @@ class EventsPage extends StatefulWidget {
   State<EventsPage> createState() => _EventsPageState();
 }
 
-class _EventsPageState extends State<EventsPage> {
+class _EventsPageState extends State<EventsPage>
+    with TickerProviderStateMixin {
   String _filterClassification = 'all';
   String _sortBy = 'date';
-  
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DataProvider>(
@@ -108,42 +152,62 @@ class _EventsPageState extends State<EventsPage> {
             ],
           ),
           
-          body: Column(
-            children: [
-              _buildFilterChips(),
-              Expanded(
-                child: events.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.event_note,
-                              size: 64,
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+          body: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Column(
+                children: [
+                  _buildFilterChips(),
+                  Expanded(
+                    child: events.isEmpty
+                        ? TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) {
+                              return Transform.scale(
+                                scale: 0.95 + (0.05 * value),
+                                child: Opacity(
+                                  opacity: value,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.event_note,
+                                    size: 64,
+                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No events yet',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Tap + to create your first event',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No events yet',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap + to create your first event',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: events.length,
-                        itemBuilder: (context, index) {
-                          return _buildEventCard(context, events[index], dataProvider);
-                        },
-                      ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: events.length,
+                            itemBuilder: (context, index) {
+                              return _buildEventCard(context, events[index], dataProvider, index);
+                            },
+                          ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'events_fab',
@@ -188,24 +252,39 @@ class _EventsPageState extends State<EventsPage> {
           itemBuilder: (context, index) {
             final classification = classifications[index];
             final isSelected = _filterClassification == classification;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(classification[0].toUpperCase() + classification.substring(1)),
-                selected: isSelected,
-                showCheckmark: false,
-                onSelected: (selected) {
-                  setState(() => _filterClassification = classification);
-                },
-                avatar: classification != 'all'
-                    ? Icon(
-                        AppTheme.getClassificationIcon(classification),
-                        size: 18,
-                        color: isSelected
-                            ? AppTheme.getClassificationColor(classification)
-                            : null,
-                      )
-                    : null,
+            
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: Duration(milliseconds: 300 + (index * 50)),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: 0.8 + (0.2 * value),
+                  child: Opacity(
+                    opacity: value,
+                    child: child,
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(classification[0].toUpperCase() + classification.substring(1)),
+                  selected: isSelected,
+                  showCheckmark: false,
+                  onSelected: (selected) {
+                    setState(() => _filterClassification = classification);
+                  },
+                  avatar: classification != 'all'
+                      ? Icon(
+                          AppTheme.getClassificationIcon(classification),
+                          size: 18,
+                          color: isSelected
+                              ? AppTheme.getClassificationColor(classification)
+                              : null,
+                        )
+                      : null,
+                ),
               ),
             );
           },
@@ -213,48 +292,61 @@ class _EventsPageState extends State<EventsPage> {
       );
     }
     
-  Widget _buildEventCard(BuildContext context, Event event, DataProvider dataProvider) {
+  Widget _buildEventCard(BuildContext context, Event event, DataProvider dataProvider, int index) {
     final color = AppTheme.getClassificationColor(event.classification);
     final daysUntil = event.startTime.difference(DateTime.now()).inDays;
     
-    return Slidable(
-      key: ValueKey(event.id),
-      endActionPane: ActionPane(
-        motion: const StretchMotion(),
-        children: [
-          if (event.isTask)
-            SlidableAction(
-              onPressed: (context) async {
-                final wasCompleted = event.isCompleted;
-                dataProvider.toggleEventComplete(event.id);
-                
-                // Play completion sound when task is marked complete (if not muted)
-                if (!wasCompleted && !dataProvider.muteRingtone) {
-                  final audioPlayer = AudioPlayer();
-                  try {
-                    await audioPlayer.play(AssetSource('accept2.mp3'));
-                  } catch (e) {
-                    debugPrint('Error playing accept2.mp3: $e');
-                  }
-                }
-              },
-              backgroundColor: AppTheme.successGreen,
-              foregroundColor: Colors.white,
-              icon: Icons.check,
-              label: event.isCompleted ? 'Undo' : 'Complete',
-            ),
-          SlidableAction(
-            onPressed: (context) {
-              _showDeleteDialog(context, event, dataProvider);
-            },
-            backgroundColor: AppTheme.errorRed,
-            foregroundColor: Colors.white,
-            icon: Icons.delete,
-            label: 'Delete',
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 30 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
           ),
-        ],
-      ),
-      child: Card(
+        );
+      },
+      child: Slidable(
+        key: ValueKey(event.id),
+        endActionPane: ActionPane(
+          motion: const StretchMotion(),
+          children: [
+            if (event.isTask)
+              SlidableAction(
+                onPressed: (context) async {
+                  final wasCompleted = event.isCompleted;
+                  dataProvider.toggleEventComplete(event.id);
+                  
+                  // Play completion sound when task is marked complete (if not muted)
+                  if (!wasCompleted && !dataProvider.muteRingtone) {
+                    final audioPlayer = AudioPlayer();
+                    try {
+                      await audioPlayer.play(AssetSource('accept2.mp3'));
+                    } catch (e) {
+                      debugPrint('Error playing accept2.mp3: $e');
+                    }
+                  }
+                },
+                backgroundColor: AppTheme.successGreen,
+                foregroundColor: Colors.white,
+                icon: Icons.check,
+                label: event.isCompleted ? 'Undo' : 'Complete',
+              ),
+            SlidableAction(
+              onPressed: (context) {
+                _showDeleteDialog(context, event, dataProvider);
+              },
+              backgroundColor: AppTheme.errorRed,
+              foregroundColor: Colors.white,
+              icon: Icons.delete,
+              label: 'Delete',
+            ),
+          ],
+        ),
+        child: Card(
         margin: const EdgeInsets.only(bottom: 12),
         child: InkWell(
           onTap: () {
@@ -355,8 +447,9 @@ class _EventsPageState extends State<EventsPage> {
           ),
         ),
       ),
-    );
-  }
+      ),
+      );
+    }
 
   Widget _buildChip(BuildContext context, String label, Color color) {
     return Container(

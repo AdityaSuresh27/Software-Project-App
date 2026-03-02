@@ -408,7 +408,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(40),
                                     child: Transform.scale(
-                                      scale: 1.2,
+                                      scale: 1,
                                       child: Image.asset(
                                         'lib/assets/selogo.png',
                                         fit: BoxFit.contain,

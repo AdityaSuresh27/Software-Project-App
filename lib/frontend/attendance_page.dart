@@ -28,7 +28,51 @@ class AttendancePage extends StatefulWidget {
   State<AttendancePage> createState() => _AttendancePageState();
 }
 
-class _AttendancePageState extends State<AttendancePage> {
+class _AttendancePageState extends State<AttendancePage>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DataProvider>(
@@ -90,93 +134,128 @@ class _AttendancePageState extends State<AttendancePage> {
             ],
           ),
           body: courseNames.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.event_busy_outlined,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+              ? TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: 0.95 + (0.05 * value),
+                      child: Opacity(
+                        opacity: value,
+                        child: child,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No classes found',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Add classes to your timetable to track attendance',
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                    );
+                  },
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_busy_outlined,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No classes found',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add classes to your timetable to track attendance',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 )
-              : Column(
-                  children: [
-                    // Overall Stats Card
-                    if (allStats.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.primaryBlue,
-                              AppTheme.primaryBlue.withValues(alpha: 0.8),
+              : FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      children: [
+                        // Overall Stats Card
+                        if (allStats.isNotEmpty)
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) {
+                              return Transform.scale(
+                                scale: 0.95 + (0.05 * value),
+                                child: Opacity(
+                                  opacity: value,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppTheme.primaryBlue,
+                                    AppTheme.primaryBlue.withValues(alpha: 0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: _buildOverallStats(allStats),
+                            ),
+                          ),
+
+                        // Subject List Header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Classes (${courseNames.length})',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
                         ),
-                        child: _buildOverallStats(allStats),
-                      ),
 
-                    // Subject List Header
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Classes (${courseNames.length})',
-                            style: Theme.of(context).textTheme.titleMedium,
+                        // Classes List
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            itemCount: courseNames.length,
+                            itemBuilder: (context, index) {
+                              final courseName = courseNames.elementAt(index);
+                              final stats = allStats[courseName];
+                              
+                              // Get first class event for this course to extract metadata
+                              final classEvent = dataProvider.events.firstWhere(
+                                (e) => e.classification == 'class' && e.title == courseName,
+                              );
+                              
+                              return _buildCourseCard(
+                                context,
+                                courseName,
+                                stats,
+                                classEvent.color,
+                                dataProvider,
+                                index,
+                              );
+                            },
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-
-                    // Classes List
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        itemCount: courseNames.length,
-                        itemBuilder: (context, index) {
-                          final courseName = courseNames.elementAt(index);
-                          final stats = allStats[courseName];
-                          
-                          // Get first class event for this course to extract metadata
-                          final classEvent = dataProvider.events.firstWhere(
-                            (e) => e.classification == 'class' && e.title == courseName,
-                          );
-                          
-                          return _buildCourseCard(
-                            context,
-                            courseName,
-                            stats,
-                            classEvent.color,
-                            dataProvider,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
         );
       },
@@ -273,6 +352,7 @@ class _AttendancePageState extends State<AttendancePage> {
     AttendanceStats? stats,
     String? colorHex,
     DataProvider dataProvider,
+    int index,
   ) {
     final color = colorHex != null
         ? Color(int.parse(colorHex.replaceFirst('#', '0xFF')))
@@ -280,24 +360,37 @@ class _AttendancePageState extends State<AttendancePage> {
 
     final hasStats = stats != null && stats.totalClasses > 0;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shadowColor: color.withValues(alpha: 0.2),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ClassAttendanceDetailsPage(
-                courseName: courseName,
-                color: color,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 30 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        elevation: 2,
+        shadowColor: color.withValues(alpha: 0.2),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ClassAttendanceDetailsPage(
+                  courseName: courseName,
+                  color: color,
+                ),
               ),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
@@ -403,7 +496,8 @@ class _AttendancePageState extends State<AttendancePage> {
           ),
         ),
       ),
-    );
+      ),
+      );
   }
 
   Widget _buildStatChip(String label, Color color) {

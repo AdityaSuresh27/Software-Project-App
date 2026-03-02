@@ -32,15 +32,54 @@ class CalendarPage extends StatefulWidget {
   State<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _CalendarPageState extends State<CalendarPage> {
+class _CalendarPageState extends State<CalendarPage>
+    with TickerProviderStateMixin {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+    
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
   }
 
   @override
@@ -117,56 +156,76 @@ class _CalendarPageState extends State<CalendarPage> {
             ],
           ),
           
-          body: Column(
-            children: [
-              Card(
-                margin: const EdgeInsets.all(16),
-                child: TableCalendar(
-                  firstDay: DateTime.utc(2020, 1, 1),
-                  lastDay: DateTime.utc(2030, 12, 31),
-                  focusedDay: _focusedDay,
-                  calendarFormat: _calendarFormat,
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  eventLoader: _getItemsForDay,
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  },
-                  onFormatChanged: (format) {
-                    setState(() => _calendarFormat = format);
-                  },
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
+          body: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Column(
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: 0.95 + (0.05 * value),
+                        child: Opacity(
+                          opacity: value,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.all(16),
+                      child: TableCalendar(
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _focusedDay,
+                        calendarFormat: _calendarFormat,
+                        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                        eventLoader: _getItemsForDay,
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                        onFormatChanged: (format) {
+                          setState(() => _calendarFormat = format);
+                        },
+                        calendarStyle: CalendarStyle(
+                          todayDecoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          selectedDecoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          markerDecoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                          markersMaxCount: 3,
+                          canMarkersOverflow: true,
+                          outsideDaysVisible: false,
+                        ),
+                        headerStyle: HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                          titleTextStyle: Theme.of(context).textTheme.titleLarge!,
+                          leftChevronIcon: const Icon(Icons.chevron_left),
+                          rightChevronIcon: const Icon(Icons.chevron_right),
+                        ),
+                      ),
                     ),
-                    selectedDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    markerDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary,
-                      shape: BoxShape.circle,
-                    ),
-                    markersMaxCount: 3,
-                    canMarkersOverflow: true,
-                    outsideDaysVisible: false,
                   ),
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                    titleTextStyle: Theme.of(context).textTheme.titleLarge!,
-                    leftChevronIcon: const Icon(Icons.chevron_left),
-                    rightChevronIcon: const Icon(Icons.chevron_right),
+                  Expanded(
+                    child: _buildItemsList(dataProvider),
                   ),
-                ),
+                ],
               ),
-              Expanded(
-                child: _buildItemsList(dataProvider),
-              ),
-            ],
+            ),
           ),
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'calendar_fab',
@@ -186,26 +245,40 @@ class _CalendarPageState extends State<CalendarPage> {
     final items = _getItemsForDay(_selectedDay ?? _focusedDay);
 
     if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.event_available_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+      return TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: 0.95 + (0.05 * value),
+            child: Opacity(
+              opacity: value,
+              child: child,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'No events for this day',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap + to add an event',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+          );
+        },
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.event_available_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No events for this day',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tap + to add an event',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -214,12 +287,12 @@ class _CalendarPageState extends State<CalendarPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: items.length,
       itemBuilder: (context, index) {
-        return _buildEventCard(context, items[index], dataProvider);
+        return _buildEventCard(context, items[index], dataProvider, index);
       },
     );
   }
 
-  Widget _buildEventCard(BuildContext context, Event event, DataProvider dataProvider) {
+  Widget _buildEventCard(BuildContext context, Event event, DataProvider dataProvider, int index) {
     final color = event.completionColor != null
         ? Color(int.parse(event.completionColor!.replaceFirst('#', '0xFF')))
         : (event.isCompleted 
@@ -244,139 +317,153 @@ class _CalendarPageState extends State<CalendarPage> {
           );
         },
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Icon(
-                        event.isCompleted || event.completionColor != null
-                            ? Icons.check_circle
-                            : AppTheme.getClassificationIcon(event.classification),
-                        color: color,
-                      ),
-                    ),
-                    if (event.isImportant)
-                      Positioned(
-                        top: 2,
-                        right: 2,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: Duration(milliseconds: 400 + (index * 100)),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, 20 * (1 - value)),
+              child: Opacity(
+                opacity: value,
+                child: child,
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Stack(
+                    children: [
+                      Center(
                         child: Icon(
-                          Icons.star,
-                          color: AppTheme.warningAmber,
-                          size: 16,
+                          event.isCompleted || event.completionColor != null
+                              ? Icons.check_circle
+                              : AppTheme.getClassificationIcon(event.classification),
+                          color: color,
                         ),
                       ),
-                  ],
+                      if (event.isImportant)
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: Icon(
+                            Icons.star,
+                            color: AppTheme.warningAmber,
+                            size: 16,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      event.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: event.isImportant ? FontWeight.w700 : FontWeight.w500,
-                        decoration: event.isCompleted ? TextDecoration.lineThrough : null,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: event.isImportant ? FontWeight.w700 : FontWeight.w500,
+                          decoration: event.isCompleted ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.schedule, size: 14, color: color),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              timeText,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: color,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: color.withValues(alpha: 0.3)),
+                            ),
+                            child: Text(
+                              event.classification[0].toUpperCase() + event.classification.substring(1),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                AppPopupMenuButton<String>(
+                  iconData: Icons.more_vert,
+                  iconColor: color,
+                  backgroundColor: color.withValues(alpha: 0.08),
+                  iconSize: 18,
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AddEventDialog(editEvent: event),
+                      );
+                    } else if (value == 'duplicate') {
+                      _duplicateEvent(context, event, dataProvider);
+                    } else if (value == 'delete') {
+                      _showDeleteConfirmation(context, event, dataProvider);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.schedule, size: 14, color: color),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            timeText,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: color,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: color.withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            event.classification[0].toUpperCase() + event.classification.substring(1),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: color,
-                            ),
-                          ),
-                        ),
-                      ],
+                    const PopupMenuItem(
+                      value: 'duplicate',
+                      child: Row(
+                        children: [
+                          Icon(Icons.content_copy),
+                          SizedBox(width: 8),
+                          Text('Duplicate'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              AppPopupMenuButton<String>(
-                iconData: Icons.more_vert,
-                iconColor: color,
-                backgroundColor: color.withValues(alpha: 0.08),
-                iconSize: 18,
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AddEventDialog(editEvent: event),
-                    );
-                  } else if (value == 'duplicate') {
-                    _duplicateEvent(context, event, dataProvider);
-                  } else if (value == 'delete') {
-                    _showDeleteConfirmation(context, event, dataProvider);
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit_outlined),
-                        SizedBox(width: 8),
-                        Text('Edit'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'duplicate',
-                    child: Row(
-                      children: [
-                        Icon(Icons.content_copy),
-                        SizedBox(width: 8),
-                        Text('Duplicate'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

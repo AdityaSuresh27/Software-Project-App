@@ -31,7 +31,50 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleSignOut() async {
     final confirm = await showDialog<bool>(
@@ -67,7 +110,6 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -102,133 +144,159 @@ class _ProfilePageState extends State<ProfilePage> {
     ],
   ),
 ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildProfileHeader(context),
-          const SizedBox(height: 32),
-          _buildSection(
-            context,
-            'Appearance',
-            [
-              SwitchListTile(
-                secondary: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
-                title: const Text('Dark Mode'),
-                subtitle: const Text('Toggle dark theme'),
-                value: isDarkMode,
-                onChanged: (value) {
-                  themeProvider.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
-                },
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildProfileHeader(context),
+              const SizedBox(height: 32),
+              _buildSection(
+                context,
+                'Appearance',
+                0,
+                [
+                  SwitchListTile(
+                    secondary: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                    title: const Text('Dark Mode'),
+                    subtitle: const Text('Toggle dark theme'),
+                    value: isDarkMode,
+                    onChanged: (value) {
+                      themeProvider.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSection(
-            context,
-            'Data & Categories',
-            [
-              _buildTile(
-                'Manage Categories',
-                '${dataProvider.categories.length} categories',
-                Icons.folder_outlined,
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ManageCategoriesPage(),
+              const SizedBox(height: 24),
+              _buildSection(
+                context,
+                'Data & Categories',
+                1,
+                [
+                  _buildTile(
+                    'Manage Categories',
+                    '${dataProvider.categories.length} categories',
+                    Icons.folder_outlined,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ManageCategoriesPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildSection(
+                context,
+                'Security',
+                2,
+                [
+                  _buildMfaTile(context, dataProvider),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildSection(
+                context,
+                'Notifications',
+                3,
+                [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.alarm_outlined),
+                    title: const Text('Event Reminders'),
+                    subtitle: const Text('Notify at reminder times set on each event'),
+                    // Reads live from DataProvider so toggle state persists across restarts
+                    value: dataProvider.notifyReminders,
+                    onChanged: (value) => dataProvider.setNotifyReminders(value),
+                  ),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.notifications_active_outlined),
+                    title: const Text('Event Start Alerts'),
+                    subtitle: const Text('Notify when an event is beginning'),
+                    value: dataProvider.notifyEventStart,
+                    onChanged: (value) => dataProvider.setNotifyEventStart(value),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildSection(
+                context,
+                'Sound',
+                4,
+                [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.volume_off_outlined),
+                    title: const Text('Mute Startup Sound'),
+                    subtitle: const Text('Disable sound when opening the app'),
+                    value: dataProvider.muteStartupSound,
+                    onChanged: (value) => dataProvider.setMuteStartupSound(value),
+                  ),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.notifications_off_outlined),
+                    title: const Text('Mute Ringtones'),
+                    subtitle: const Text('Disable sounds for event creation and completion'),
+                    value: dataProvider.muteRingtone,
+                    onChanged: (value) => dataProvider.setMuteRingtone(value),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildSection(
+                context,
+                'About',
+                5,
+                [
+                  _buildInfoTile('Version', '2.0.0', Icons.info_outline),
+                  _buildTile(
+                    'Privacy Policy',
+                    'How we handle your data',
+                    Icons.privacy_tip_outlined,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicyPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600 + 500),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: 0.95 + (0.05 * value),
+                    child: Opacity(
+                      opacity: value,
+                      child: child,
                     ),
                   );
                 },
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSection(
-            context,
-            'Security',
-            [
-              _buildMfaTile(context, dataProvider),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSection(
-            context,
-            'Notifications',
-            [
-              SwitchListTile(
-                secondary: const Icon(Icons.alarm_outlined),
-                title: const Text('Event Reminders'),
-                subtitle: const Text('Notify at reminder times set on each event'),
-                // Reads live from DataProvider so toggle state persists across restarts
-                value: dataProvider.notifyReminders,
-                onChanged: (value) => dataProvider.setNotifyReminders(value),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.notifications_active_outlined),
-                title: const Text('Event Start Alerts'),
-                subtitle: const Text('Notify when an event is beginning'),
-                value: dataProvider.notifyEventStart,
-                onChanged: (value) => dataProvider.setNotifyEventStart(value),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSection(
-            context,
-            'Sound',
-            [
-              SwitchListTile(
-                secondary: const Icon(Icons.volume_off_outlined),
-                title: const Text('Mute Startup Sound'),
-                subtitle: const Text('Disable sound when opening the app'),
-                value: dataProvider.muteStartupSound,
-                onChanged: (value) => dataProvider.setMuteStartupSound(value),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.notifications_off_outlined),
-                title: const Text('Mute Ringtones'),
-                subtitle: const Text('Disable sounds for event creation and completion'),
-                value: dataProvider.muteRingtone,
-                onChanged: (value) => dataProvider.setMuteRingtone(value),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSection(
-            context,
-            'About',
-            [
-              _buildInfoTile('Version', '2.0.0', Icons.info_outline),
-              _buildTile(
-                'Privacy Policy',
-                'How we handle your data',
-                Icons.privacy_tip_outlined,
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PrivacyPolicyPage(),
+                child: SizedBox(
+                  height: 56,
+                  child: OutlinedButton.icon(
+                    onPressed: _handleSignOut,
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sign Out'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.errorRed,
+                      side: BorderSide(color: AppTheme.errorRed),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
+              const SizedBox(height: 32),
             ],
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 56,
-            child: OutlinedButton.icon(
-              onPressed: _handleSignOut,
-              icon: const Icon(Icons.logout),
-              label: const Text('Sign Out'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.errorRed,
-                side: BorderSide(color: AppTheme.errorRed),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-        ],
+        ),
       ),
     );
   }
@@ -402,23 +470,37 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSection(BuildContext context, String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
+  Widget _buildSection(BuildContext context, String title, int index, List<Widget> children) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 500 + (index * 100)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 30 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
           ),
-        ),
-        Card(
-          child: Column(
-            children: children,
+        );
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 12),
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
-        ),
-      ],
+          Card(
+            child: Column(
+              children: children,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
