@@ -434,7 +434,18 @@ Future<void> _checkAuthStatus() async {
   List<Event> getUpcomingDeadlines({int limit = 10}) {
     final now = DateTime.now();
     final upcoming = _events
-        .where((e) => e.isTask && !e.isCompleted && e.startTime.isAfter(now))
+        .where((e) {
+          // Exclude if completed or missed
+          if (e.isCompleted || e.isMissed) return false;
+          
+          // Exclude if attendance is marked (for class events)
+          if (e.classification == 'class') {
+            final attendance = getAttendanceForDate(e.category ?? 'Unknown', e.startTime);
+            if (attendance != null) return false;
+          }
+          
+          return e.isTask && e.startTime.isAfter(now);
+        })
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
     return upcoming.take(limit).toList();

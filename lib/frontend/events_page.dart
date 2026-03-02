@@ -295,6 +295,33 @@ class _EventsPageState extends State<EventsPage>
   Widget _buildEventCard(BuildContext context, Event event, DataProvider dataProvider, int index) {
     final color = AppTheme.getClassificationColor(event.classification);
     final daysUntil = event.startTime.difference(DateTime.now()).inDays;
+    final now = DateTime.now();
+    
+    // Check if event is marked
+    final isMarked = event.isCompleted || 
+                     event.isMissed || 
+                     (event.classification == 'class' && 
+                      dataProvider.getAttendanceForDate(event.category ?? 'Unknown', event.startTime) != null);
+    
+    // Determine status text
+    String statusText;
+    Color statusColor;
+    if (daysUntil == 0) {
+      statusText = 'Today';
+      statusColor = color;
+    } else if (daysUntil == 1) {
+      statusText = 'Tomorrow';
+      statusColor = color;
+    } else if (daysUntil < 0 && !isMarked) {
+      statusText = 'Overdue';
+      statusColor = AppTheme.errorRed;
+    } else if (isMarked && now.isAfter(event.startTime)) {
+      statusText = 'Marked';
+      statusColor = AppTheme.secondaryTeal;
+    } else {
+      statusText = 'In $daysUntil days';
+      statusColor = color;
+    }
     
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -393,18 +420,12 @@ class _EventsPageState extends State<EventsPage>
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.schedule, size: 14, color: color),
+                              Icon(Icons.schedule, size: 14, color: statusColor),
                               const SizedBox(width: 4),
                               Text(
-                                daysUntil == 0
-                                    ? 'Today'
-                                    : daysUntil == 1
-                                        ? 'Tomorrow'
-                                        : daysUntil < 0
-                                            ? 'Overdue'
-                                            : 'In $daysUntil days',
+                                statusText,
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: daysUntil < 0 ? AppTheme.errorRed : color,
+                                  color: statusColor,
                                 ),
                               ),
                             ],

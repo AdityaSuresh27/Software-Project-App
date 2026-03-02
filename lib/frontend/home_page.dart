@@ -471,10 +471,16 @@ Widget _buildUpcomingEvents(BuildContext context, DataProvider dataProvider, Dat
   final todayEvents = dataProvider.getEventsForDay(now);
   
   final upcomingEvents = todayEvents.where((event) {
-    // Check if event is incomplete/unmarked (including classes)
-    final isIncomplete = !event.isCompleted && event.completionColor == null;
+    // Exclude if completed or missed
+    if (event.isCompleted || event.isMissed) return false;
     
-    return isIncomplete;
+    // Exclude if attendance is marked (for class events)
+    if (event.classification == 'class') {
+      final attendance = dataProvider.getAttendanceForDate(event.category ?? 'Unknown', event.startTime);
+      if (attendance != null) return false;
+    }
+    
+    return true;
   }).toList()
     ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
@@ -565,6 +571,13 @@ Widget _buildUpcomingEvents(BuildContext context, DataProvider dataProvider, Dat
         ? Color(int.parse(event.completionColor!.replaceFirst('#', '0xFF')))
         : AppTheme.getClassificationColor(event.classification);
     
+    // Check if event is marked
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final isMarked = event.isCompleted || 
+                     event.isMissed || 
+                     (event.classification == 'class' && 
+                      dataProvider.getAttendanceForDate(event.category ?? 'Unknown', event.startTime) != null);
+    
     // Determine time status
     String timeStatusText;
     Color timeStatusColor;
@@ -591,6 +604,11 @@ Widget _buildUpcomingEvents(BuildContext context, DataProvider dataProvider, Dat
       timeStatusText = 'In Progress';
       timeStatusColor = AppTheme.warningAmber;
       timeStatusIcon = Icons.play_circle_outline;
+    } else if (isMarked) {
+      // Event is marked, don't show overdue
+      timeStatusText = 'Marked';
+      timeStatusColor = AppTheme.secondaryTeal;
+      timeStatusIcon = Icons.check;
     } else {
       // Event is overdue
       timeStatusText = 'Overdue';
