@@ -10,7 +10,7 @@
 // ========== EVENT MODEL ==========
 /// Event - Represents any calendar event
 /// 
-/// Types: 'class', 'exam', 'assignment', 'deadline', 'meeting', 'personal', 'other'
+/// Types: 'class', 'exam', 'assignment', 'meeting', 'other'
 /// Priorities: 'low', 'medium', 'high', 'critical'
 /// 
 class Event {
@@ -216,5 +216,98 @@ class Category {
     name: json['name'],
     color: json['color'],
     icon: json['icon'],
+  );
+}
+
+// ========== AVATAR MODEL ==========
+/// Avatar - Customizable user avatar with game-like features
+/// 
+/// Stores avatar customization including body style, colors, accessories
+/// and animation preferences. Renders as a simple geometric character.
+class Avatar {
+  /// Avatar body style: 'circle', 'square', 'rounded'
+  String bodyStyle;
+  /// Base color of the avatar (as hex string)
+  String bodyColor;
+  /// Accent color for details (as hex string)
+  String accentColor;
+  /// Eyes style: 'round', 'square', 'x_eyes'
+  String eyesStyle;
+  /// Eyes color (as hex string) - affects pupil color, not eye whites
+  String eyesColor;
+  /// Mouth style: 'smile', 'neutral', 'surprised', 'box'
+  String mouthStyle;
+  /// Whether avatar has glasses
+  bool hasGlasses;
+
+  Avatar({
+    this.bodyStyle = 'rounded',
+    this.bodyColor = '#45B7D1',
+    this.accentColor = '#FFC75F',
+    this.eyesStyle = 'square',
+    this.eyesColor = '#3366FF',
+    this.mouthStyle = 'box',
+    this.hasGlasses = false,
+  });
+
+  /// Create a random avatar
+  factory Avatar.random() {
+    const bodyStyles = ['circle', 'square', 'rounded'];
+    const eyesStyles = ['round', 'square', 'x_eyes'];
+    const mouthStyles = ['smile', 'neutral', 'surprised', 'box'];
+    const colors = [
+      '#FF6B9D', '#FF6B9D', '#4ECDC4', '#45B7D1', '#FFA07A', 
+      '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#3366FF', '#FF69B4', '#00CED1'
+    ];
+    const eyeColors = ['#000000', '#3366FF', '#FF0000', '#00AA00', '#FFB6C1', '#4B0082'];
+    final random = DateTime.now().microsecond;
+
+    return Avatar(
+      bodyStyle: bodyStyles[random % bodyStyles.length],
+      bodyColor: colors[random % colors.length],
+      accentColor: colors[(random + 1) % colors.length],
+      eyesStyle: eyesStyles[(random + 2) % eyesStyles.length],
+      eyesColor: eyeColors[(random + 3) % eyeColors.length],
+      mouthStyle: mouthStyles[(random + 4) % mouthStyles.length],
+      hasGlasses: random % 3 == 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'bodyStyle': bodyStyle,
+    'bodyColor': bodyColor,
+    'accentColor': accentColor,
+    'eyesStyle': eyesStyle,
+    'eyesColor': eyesColor,
+    'mouthStyle': mouthStyle,
+    'hasGlasses': hasGlasses,
+  };
+
+  factory Avatar.fromJson(Map<String, dynamic> json) => Avatar(
+    bodyStyle: json['bodyStyle'] ?? 'rounded',
+    bodyColor: json['bodyColor'] ?? '#45B7D1',
+    accentColor: json['accentColor'] ?? '#FFC75F',
+    eyesStyle: json['eyesStyle'] ?? 'square',
+    eyesColor: json['eyesColor'] ?? '#3366FF',
+    mouthStyle: json['mouthStyle'] ?? 'box',
+    hasGlasses: json['hasGlasses'] ?? false,
+  );
+
+  Avatar copyWith({
+    String? bodyStyle,
+    String? bodyColor,
+    String? accentColor,
+    String? eyesStyle,
+    String? eyesColor,
+    String? mouthStyle,
+    bool? hasGlasses,
+  }) => Avatar(
+    bodyStyle: bodyStyle ?? this.bodyStyle,
+    bodyColor: bodyColor ?? this.bodyColor,
+    accentColor: accentColor ?? this.accentColor,
+    eyesStyle: eyesStyle ?? this.eyesStyle,
+    eyesColor: eyesColor ?? this.eyesColor,
+    mouthStyle: mouthStyle ?? this.mouthStyle,
+    hasGlasses: hasGlasses ?? this.hasGlasses,
   );
 }

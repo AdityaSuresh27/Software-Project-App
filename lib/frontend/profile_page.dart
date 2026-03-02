@@ -23,6 +23,8 @@ import 'auth_screen.dart';
 import '../backend/data_provider.dart';
 import 'manage_categories_page.dart';
 import 'privacy_policy_page.dart';
+import 'animated_avatar.dart';
+import 'avatar_customizer.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -423,26 +425,74 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildProfileHeader(BuildContext context) {
+    final dataProvider = Provider.of<DataProvider>(context);
+    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Row(
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  'SU',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+            GestureDetector(
+              onTap: () {
+                // Show avatar customizer dialog
+                showDialog(
+                  context: context,
+                  builder: (context) => Dialog(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Customize Your Avatar',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 600),
+                              child: SingleChildScrollView(
+                                child: AvatarCustomizer(
+                                  initialAvatar: dataProvider.avatar,
+                                  onAvatarSelected: (avatar) {
+                                    dataProvider.setAvatar(avatar);
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Done'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
+                );
+              },
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppTheme.primaryBlue,
+                    width: 2,
+                  ),
+                ),
+                child: AnimatedAvatar(
+                  avatar: dataProvider.avatar,
+                  size: 70,
+                  autoAnimate: true,
                 ),
               ),
             ),

@@ -42,6 +42,10 @@ class DataProvider extends ChangeNotifier {
   /// User-defined categories for organizing events (Math, Science, etc.)
   List<Category> _categories = [];
   
+  // ========== USER AVATAR ==========
+  /// User's customizable avatar for profile display
+  late Avatar _avatar;
+  
   // ========== USER AUTHENTICATION & PREFERENCES ==========
   /// Whether user is logged in
   bool _isAuthenticated = false;
@@ -68,6 +72,7 @@ class DataProvider extends ChangeNotifier {
   List<AttendanceRecord> get attendanceRecords => _attendanceRecords;
   List<Event> get events => _events;
   List<Category> get categories => _categories;
+  Avatar get avatar => _avatar;
   bool get isAuthenticated => _isAuthenticated;
   bool get mfaEnabled => _mfaEnabled;
   bool get notifyReminders => _notifyReminders;
@@ -95,6 +100,18 @@ Future<void> _checkAuthStatus() async {
     _muteStartupSound = prefs.getBool('muteStartupSound') ?? false;
     _muteRingtone = prefs.getBool('muteRingtone') ?? false;
     _gamificationEnabled = prefs.getBool('gamificationEnabled') ?? true;
+
+    // Load avatar from SharedPreferences
+    final avatarJson = prefs.getString('userAvatar');
+    if (avatarJson != null) {
+      try {
+        _avatar = Avatar.fromJson(jsonDecode(avatarJson));
+      } catch (e) {
+        _avatar = Avatar(); // Default avatar if parsing fails
+      }
+    } else {
+      _avatar = Avatar(); // Initialize with default avatar
+    }
 
     final lastActiveStr = prefs.getString('lastActiveAt');
     if (lastActiveStr != null) {
@@ -163,6 +180,14 @@ Future<void> _checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('mfaEnabled', enabled);
     _mfaEnabled = enabled;
+    notifyListeners();
+  }
+
+  /// Set user avatar and persist to SharedPreferences
+  Future<void> setAvatar(Avatar avatar) async {
+    final prefs = await SharedPreferences.getInstance();
+    _avatar = avatar;
+    await prefs.setString('userAvatar', jsonEncode(avatar.toJson()));
     notifyListeners();
   }
 

@@ -6,6 +6,7 @@
 /// - Email/password login form
 /// - "Forgot Password" link for password recovery
 /// - Sign up redirect for new users
+/// - Avatar customization during sign-up
 /// - Multi-factor authentication (MFA) option
 /// - Persistent session tracking (saved in SharedPreferences)
 /// - Form validation
@@ -16,10 +17,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../backend/data_provider.dart';
+import '../backend/models.dart';
 import 'main_navigation.dart';
 import 'theme.dart';
 import 'forgot_password_page.dart';
 import 'otp_screen.dart';
+import 'avatar_customizer.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -38,6 +41,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   
   bool _obscurePassword = true;
   bool _isLoading = false;
+  late Avatar _selectedAvatar;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -46,6 +50,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    _selectedAvatar = Avatar(); // Initialize with default avatar
     
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -89,12 +94,83 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // If signing up, show avatar customizer
+      if (!_isLogin) {
+        if (!mounted) return;
+        final result = await showDialog<Avatar>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Dialog(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Customize Your Avatar',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 600),
+                      child: SingleChildScrollView(
+                        child: AvatarCustomizer(
+                          initialAvatar: _selectedAvatar,
+                          onAvatarSelected: (avatar) {
+                            _selectedAvatar = avatar;
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Back'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => Navigator.pop(context, _selectedAvatar),
+                            child: const Text('Confirm'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+        
+        // If user dismissed the dialog (pressed back), don't proceed
+        if (result == null) {
+          return;
+        }
+        // Store the customized avatar
+        _selectedAvatar = result;
+      }
+
       setState(() => _isLoading = true);
 
       await Future.delayed(const Duration(milliseconds: 800));
 
       if (mounted) {
         final dataProvider = Provider.of<DataProvider>(context, listen: false);
+        
+        // Save avatar if signing up
+        if (!_isLogin) {
+          await dataProvider.setAvatar(_selectedAvatar);
+        }
+        
         await dataProvider.signIn();
 
         if (dataProvider.mfaEnabled && _isLogin) {
