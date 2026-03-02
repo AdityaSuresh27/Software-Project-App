@@ -34,6 +34,8 @@ class Event {
   List<VoiceNote> voiceNotes;
   /// Whether event has been completed/done
   bool isCompleted;
+  /// Whether event was missed
+  bool isMissed;
   String? completionColor;
   /// Priority level affects notification urgency
   String priority; // 'low', 'medium', 'high', 'critical'
@@ -59,6 +61,7 @@ class Event {
     this.attachments = const [],
     this.voiceNotes = const [],
     this.isCompleted = false,
+    this.isMissed = false,
     this.completionColor,
     this.priority = 'medium',
     this.estimatedDuration,
@@ -89,6 +92,7 @@ class Event {
     'attachments': attachments,
     'voiceNotes': voiceNotes.map((v) => v.toJson()).toList(),
     'isCompleted': isCompleted,
+    'isMissed': isMissed,
     'completionColor': completionColor,
     'priority': priority,
     'estimatedDuration': estimatedDuration,
@@ -111,6 +115,7 @@ class Event {
     attachments: List<String>.from(json['attachments'] ?? []),
     voiceNotes: (json['voiceNotes'] as List?)?.map((v) => VoiceNote.fromJson(v)).toList() ?? [],
     isCompleted: json['isCompleted'] ?? false,
+    isMissed: json['isMissed'] ?? false,
     completionColor: json['completionColor'],
     priority: json['priority'] ?? 'medium',
     estimatedDuration: json['estimatedDuration'],
@@ -134,6 +139,7 @@ class Event {
       attachments: List.from(attachments),
       voiceNotes: List.from(voiceNotes),
       isCompleted: false,
+      isMissed: false,
       completionColor: null,
       priority: priority,
       estimatedDuration: estimatedDuration,

@@ -409,6 +409,41 @@ class EventActionDialog extends StatelessWidget {
       );
     }
 
+    if (event.isMissed) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.errorRed.withValues(alpha: 0.2),
+                AppTheme.errorRed.withValues(alpha: 0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppTheme.errorRed.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cancel, color: AppTheme.errorRed, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Missed',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppTheme.errorRed,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (badges.isEmpty) return const SizedBox.shrink();
 
     return Padding(
@@ -947,49 +982,38 @@ Widget _buildClassActions(BuildContext context, Color color) {
   }
 
   Widget _buildRegularEventActions(BuildContext context, Color color) {
-    final dataProvider = Provider.of<DataProvider>(context, listen: false);
     final isCompleted = event.isCompleted;
+    final isMissed = event.isMissed;
+    final hasStatus = isCompleted || isMissed;
 
     return Column(
       children: [
-        // Mark as complete/incomplete
+        // Mark Status button
         SizedBox(
           width: double.infinity,
           height: 56,
           child: FilledButton.icon(
             onPressed: () async {
-              dataProvider.toggleEventComplete(event.id);
-              
-              // Play completion sound when event is marked complete (if not muted)
-              if (!isCompleted && !dataProvider.muteRingtone) {
-                final audioPlayer = AudioPlayer();
-                try {
-                  await audioPlayer.play(AssetSource('accept2.mp3'));
-                } catch (e) {
-                  debugPrint('Error playing accept2.mp3: $e');
-                }
+              if (hasStatus) {
+                // If already marked, show clear option
+                _showClearStatusDialog(context, color);
+              } else {
+                // Show status options
+                _showStatusDialog(context, color);
               }
-              
-              Navigator.pop(context);
-              
-              AppTheme.showTopNotification(
-                context,
-                isCompleted ? 'Event marked as incomplete.' : 'Event marked as complete!',
-                type: isCompleted ? NotificationType.warning : NotificationType.success,
-              );
             },
             icon: Icon(
-              isCompleted 
+              hasStatus 
                   ? Icons.restart_alt 
-                  : Icons.check_circle_outline,
+                  : Icons.flag_outlined,
             ),
             label: Text(
-              isCompleted 
-                  ? 'Mark as Incomplete' 
-                  : 'Mark as Complete',
+              hasStatus 
+                  ? 'Clear Status' 
+                  : 'Mark Status',
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: isCompleted 
+              backgroundColor: hasStatus 
                   ? AppTheme.warningAmber 
                   : AppTheme.successGreen,
               shape: RoundedRectangleBorder(
@@ -1123,6 +1147,365 @@ Widget _buildClassActions(BuildContext context, Color color) {
       case AttendanceStatus.cancelled:
         return Icons.block;
     }
+  }
+
+  void _showStatusDialog(BuildContext context, Color color) {
+    final statuses = [
+      {'status': 'completed', 'label': 'Completed', 'description': 'Event completed successfully', 'color': AppTheme.successGreen},
+      {'status': 'missed', 'label': 'Missed', 'description': 'Event was missed', 'color': AppTheme.errorRed},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.flag_outlined,
+                      color: color,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Mark Event Status',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          event.title,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    icon: const Icon(Icons.close),
+                    style: IconButton.styleFrom(
+                      backgroundColor: color.withValues(alpha: 0.1),
+                      foregroundColor: color,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Status options
+              ...statuses.map((statusInfo) {
+                final statusColor = statusInfo['color'] as Color;
+                final statusLabel = statusInfo['label'] as String;
+                final statusDescription = statusInfo['description'] as String;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      if (statusInfo['status'] == 'completed') {
+                        _markEventAsCompleted(context);
+                      } else if (statusInfo['status'] == 'missed') {
+                        _markEventAsMissed(context);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: statusColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              statusInfo['status'] == 'completed' ? Icons.check_circle : Icons.cancel,
+                              color: statusColor,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  statusLabel,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: statusColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  statusDescription,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showClearStatusDialog(BuildContext context, Color color) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.restart_alt,
+                      color: color,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Clear Event Status',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          event.title,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    icon: const Icon(Icons.close),
+                    style: IconButton.styleFrom(
+                      backgroundColor: color.withValues(alpha: 0.1),
+                      foregroundColor: color,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Confirmation message
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.warningAmber.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.warningAmber,
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warningAmber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.help_outline,
+                        color: AppTheme.warningAmber,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Clear Status',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: AppTheme.warningAmber,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Remove completed/missed status',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(dialogContext);
+                        await _clearEventStatus(context);
+                      },
+                      icon: const Icon(Icons.restart_alt),
+                      label: const Text('Clear'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.warningAmber,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _markEventAsCompleted(BuildContext context) async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    event.isCompleted = true;
+    event.isMissed = false;
+    dataProvider.updateEvent(event);
+    
+    // Play completion sound (if not muted)
+    if (!dataProvider.muteRingtone) {
+      final audioPlayer = AudioPlayer();
+      try {
+        await audioPlayer.play(AssetSource('accept2.mp3'));
+      } catch (e) {
+        debugPrint('Error playing accept2.mp3: $e');
+      }
+    }
+    
+    Navigator.pop(context);
+    
+    AppTheme.showTopNotification(
+      context,
+      'Event marked as completed!',
+      type: NotificationType.success,
+    );
+  }
+
+  Future<void> _markEventAsMissed(BuildContext context) async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    event.isCompleted = false;
+    event.isMissed = true;
+    dataProvider.updateEvent(event);
+    
+    // Play warning sound (if not muted)
+    if (!dataProvider.muteRingtone) {
+      final audioPlayer = AudioPlayer();
+      try {
+        await audioPlayer.play(AssetSource('notification.mp3'));
+      } catch (e) {
+        debugPrint('Error playing notification.mp3: $e');
+      }
+    }
+    
+    Navigator.pop(context);
+    
+    AppTheme.showTopNotification(
+      context,
+      'Event marked as missed.',
+      type: NotificationType.error,
+    );
+  }
+
+  Future<void> _clearEventStatus(BuildContext context) async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    event.isCompleted = false;
+    event.isMissed = false;
+    dataProvider.updateEvent(event);
+    
+    Navigator.pop(context);
+    
+    AppTheme.showTopNotification(
+      context,
+      'Event status cleared.',
+      type: NotificationType.info,
+    );
   }
 
   String _getAttendanceLabel(AttendanceStatus status) {
