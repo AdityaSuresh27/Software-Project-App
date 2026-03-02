@@ -9,11 +9,9 @@ import '../backend/models.dart';
 import '../backend/timetable_models.dart';
 import 'theme.dart';
 import 'add_event_dialog.dart';
+import 'gamification_popup.dart';
 
-// Const SizedBox instances to avoid repeated allocation
-const _sizedBoxWidth16 = SizedBox(width: 16);
-
-class EventActionDialog extends StatelessWidget {
+class EventActionDialog extends StatefulWidget {
   final Event event;
 
   const EventActionDialog({
@@ -21,15 +19,44 @@ class EventActionDialog extends StatelessWidget {
     required this.event,
   });
 
-  bool get _isClassEvent => event.classification == 'class';
-  
+  @override
+  State<EventActionDialog> createState() => _EventActionDialogState();
+}
+
+class _EventActionDialogState extends State<EventActionDialog> {
+  late Event currentEvent;
+
+  @override
+  void initState() {
+    super.initState();
+    currentEvent = widget.event;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final color = event.completionColor != null
-        ? Color(int.parse(event.completionColor!.replaceFirst('#', '0xFF')))
-        : AppTheme.getClassificationColor(event.classification);
+    return Consumer<DataProvider>(
+      builder: (context, dataProvider, _) {
+        // Get the latest event from provider
+        final freshEvent = dataProvider.events.firstWhere(
+          (e) => e.id == currentEvent.id,
+          orElse: () => currentEvent,
+        );
+        currentEvent = freshEvent;
 
-    // Cache opacity colors to avoid repeated withValues() calls
+        final color = freshEvent.completionColor != null
+            ? Color(int.parse(freshEvent.completionColor!.replaceFirst('#', '0xFF')))
+            : AppTheme.getClassificationColor(freshEvent.classification);
+
+        return _buildDialog(context, freshEvent, color);
+      },
+    );
+  }
+
+  bool get _isClassEvent => currentEvent.classification == 'class';
+
+  Widget _buildDialog(BuildContext context, Event event, Color color) {
+    // Const SizedBox instances to avoid repeated allocation
+    const sizedBoxWidth16 = SizedBox(width: 16);
     final c05 = color.withValues(alpha: 0.05);
     final c1 = color.withValues(alpha: 0.1);
     final c15 = color.withValues(alpha: 0.15);
@@ -80,7 +107,7 @@ class EventActionDialog extends StatelessWidget {
                           size: 24,
                         ),
                       ),
-                      _sizedBoxWidth16,
+                      sizedBoxWidth16,
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +237,7 @@ class EventActionDialog extends StatelessWidget {
 
                           // Status badges
                           if (event.isImportant || event.isCompleted)
-                            _buildStatusBadges(context, color),
+                            _buildStatusBadges(context, color, event),
 
                           // Notes section
                           if (event.notes != null && event.notes!.isNotEmpty) ...[
@@ -300,9 +327,9 @@ class EventActionDialog extends StatelessWidget {
               child: Column(
                 children: [
                   if (_isClassEvent)
-                    _buildClassActions(context, color)
+                    _buildClassActions(context, color, event)
                   else
-                    _buildRegularEventActions(context, color),
+                    _buildRegularEventActions(context, color, event),
                 ],
               ),
             ),
@@ -336,7 +363,7 @@ class EventActionDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadges(BuildContext context, Color color) {
+  Widget _buildStatusBadges(BuildContext context, Color color, Event event) {
     final badges = <Widget>[];
 
     if (event.isImportant) {
@@ -444,6 +471,41 @@ class EventActionDialog extends StatelessWidget {
       );
     }
 
+    if (event.isCancelled) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.otherGray.withValues(alpha: 0.2),
+                AppTheme.otherGray.withValues(alpha: 0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppTheme.otherGray.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.block_flipped, color: AppTheme.otherGray, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Cancelled',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppTheme.otherGray,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (badges.isEmpty) return const SizedBox.shrink();
 
     return Padding(
@@ -456,12 +518,12 @@ class EventActionDialog extends StatelessWidget {
   }
 
   String _formatDateTime() {
-    if (event.endTime != null) {
-      final startStr = DateFormat('MMM d, h:mm a').format(event.startTime);
-      final endStr = DateFormat('h:mm a').format(event.endTime!);
+    if (currentEvent.endTime != null) {
+      final startStr = DateFormat('MMM d, h:mm a').format(currentEvent.startTime);
+      final endStr = DateFormat('h:mm a').format(currentEvent.endTime!);
       return '$startStr - $endStr';
     }
-    return DateFormat('MMM d, h:mm a').format(event.startTime);
+    return DateFormat('MMM d, h:mm a').format(currentEvent.startTime);
   }
 
   String _formatClassification(String classification) {
@@ -773,7 +835,7 @@ class EventActionDialog extends StatelessWidget {
     );
   }
 
-Widget _buildClassActions(BuildContext context, Color color) {
+Widget _buildClassActions(BuildContext context, Color color, Event event) {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     final attendance = dataProvider.getAttendanceForDate(
       event.title,
@@ -791,7 +853,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
           child: isMarked
               ? FilledButton.icon(
                   onPressed: () {
-                    _unmarkAttendance(context);
+                    _unmarkAttendance(context, event);
                   },
                   icon: const Icon(Icons.clear_outlined),
                   label: const Text('Unmark Attendance'),
@@ -888,7 +950,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          event.title,
+                          widget.event.title,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                           ),
@@ -981,46 +1043,45 @@ Widget _buildClassActions(BuildContext context, Color color) {
     );
   }
 
-  Widget _buildRegularEventActions(BuildContext context, Color color) {
+  Widget _buildRegularEventActions(BuildContext context, Color color, Event event) {
     final isCompleted = event.isCompleted;
     final isMissed = event.isMissed;
-    final hasStatus = isCompleted || isMissed;
+    final isCancelled = event.isCancelled;
+    final hasStatus = isCompleted || isMissed || isCancelled;
 
     return Column(
       children: [
-        // Mark Status button
+        // Mark Status button - Direct unmark on tap when marked
         SizedBox(
           width: double.infinity,
           height: 56,
-          child: FilledButton.icon(
-            onPressed: () async {
-              if (hasStatus) {
-                // If already marked, show clear option
-                _showClearStatusDialog(context, color);
-              } else {
-                // Show status options
-                _showStatusDialog(context, color);
-              }
-            },
-            icon: Icon(
-              hasStatus 
-                  ? Icons.restart_alt 
-                  : Icons.flag_outlined,
-            ),
-            label: Text(
-              hasStatus 
-                  ? 'Clear Status' 
-                  : 'Mark Status',
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: hasStatus 
-                  ? AppTheme.warningAmber 
-                  : AppTheme.successGreen,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
+          child: hasStatus
+              ? FilledButton.icon(
+                  onPressed: () {
+                    _clearEventStatus(context);
+                  },
+                  icon: const Icon(Icons.clear_outlined),
+                  label: const Text('Clear Status'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.errorRed,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                )
+              : FilledButton.icon(
+                  onPressed: () {
+                    _showStatusDialog(context, color);
+                  },
+                  icon: const Icon(Icons.flag_outlined),
+                  label: const Text('Mark Status'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.successGreen,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
         ),
 
         const SizedBox(height: 12),
@@ -1034,7 +1095,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
               Navigator.pop(context);
               showDialog(
                 context: context,
-                builder: (context) => AddEventDialog(editEvent: event),
+                builder: (context) => AddEventDialog(editEvent: widget.event),
               );
             },
             icon: const Icon(Icons.edit_outlined),
@@ -1051,7 +1112,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
     );
   }
 
-  void _unmarkAttendance(BuildContext context) {
+  void _unmarkAttendance(BuildContext context, Event event) {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     
     // Find and delete the attendance record
@@ -1061,20 +1122,31 @@ Widget _buildClassActions(BuildContext context, Color color) {
     );
     
     if (attendance != null) {
+      // Delete attendance record
       dataProvider.deleteAttendanceRecord(attendance.id);
       
       // Reset event completion
-      event.completionColor = null;
-      event.isCompleted = false;
-      dataProvider.updateEvent(event);
+      widget.event.completionColor = null;
+      widget.event.isCompleted = false;
+      widget.event.isMissed = false;
+      widget.event.isCancelled = false;
       
-      Navigator.pop(context);
+      // Update the event in the provider
+      dataProvider.updateEvent(widget.event);
       
-      AppTheme.showTopNotification(
-        context,
-        'Attendance has been cleared for this class.',
-        type: NotificationType.warning,
-      );
+      // Close the dialog
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+      
+      // Show notification after closing dialog
+      if (context.mounted) {
+        AppTheme.showTopNotification(
+          context,
+          'Attendance has been cleared for this class.',
+          type: NotificationType.warning,
+        );
+      }
     }
   }
 
@@ -1083,40 +1155,33 @@ Widget _buildClassActions(BuildContext context, Color color) {
     
     final record = AttendanceRecord(
       id: const Uuid().v4(),
-      courseName: event.title,
-      date: event.startTime,
+      courseName: widget.event.title,
+      date: widget.event.startTime,
       status: status,
-      periodCount: event.periodCount,
+      periodCount: widget.event.periodCount,
     );
     
     dataProvider.markAttendance(record);
     
     // Update event completion color and status based on attendance
-    event.completionColor = '#${_getAttendanceColor(status).toARGB32().toRadixString(16).substring(2)}';
-    event.isCompleted = true; 
-    dataProvider.updateEvent(event);
-    
-    // Play completion sound when attendance is marked (if not muted)
-    if (!dataProvider.muteRingtone) {
-      final audioPlayer = AudioPlayer();
-      try {
-        await audioPlayer.play(AssetSource('accept2.mp3'));
-      } catch (e) {
-        debugPrint('Error playing accept2.mp3: $e');
-      }
-    }
+    widget.event.completionColor = '#${_getAttendanceColor(status).toARGB32().toRadixString(16).substring(2)}';
+    widget.event.isCompleted = true; 
+    dataProvider.updateEvent(widget.event);
     
     Navigator.pop(context);
     
-    AppTheme.showTopNotification(
-      context,
-      'Attendance marked as ${_getAttendanceLabel(status)}.',
-      type: status == AttendanceStatus.present
-          ? NotificationType.success
-          : status == AttendanceStatus.absent
-              ? NotificationType.error
-              : NotificationType.info,
-    );
+    // Show gamification popup only for today's events
+    final now = DateTime.now();
+    final isToday = widget.event.startTime.year == now.year &&
+                    widget.event.startTime.month == now.month &&
+                    widget.event.startTime.day == now.day;
+    if (isToday) {
+      await GamificationPopupService.showEventStatusPopup(
+        context,
+        widget.event.title,
+        status.name == 'present' ? 'present' : status.name == 'absent' ? 'absent' : 'cancelled',
+      );
+    }
   }
 
   Color _getAttendanceColor(AttendanceStatus status) {
@@ -1153,6 +1218,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
     final statuses = [
       {'status': 'completed', 'label': 'Completed', 'description': 'Event completed successfully', 'color': AppTheme.successGreen},
       {'status': 'missed', 'label': 'Missed', 'description': 'Event was missed', 'color': AppTheme.errorRed},
+      {'status': 'cancelled', 'label': 'Cancelled', 'description': 'Event was cancelled', 'color': AppTheme.otherGray},
     ];
 
     showDialog(
@@ -1191,7 +1257,7 @@ Widget _buildClassActions(BuildContext context, Color color) {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          event.title,
+                          widget.event.title,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                           ),
@@ -1226,6 +1292,8 @@ Widget _buildClassActions(BuildContext context, Color color) {
                         _markEventAsCompleted(context);
                       } else if (statusInfo['status'] == 'missed') {
                         _markEventAsMissed(context);
+                      } else if (statusInfo['status'] == 'cancelled') {
+                        _markEventAsCancelled(context);
                       }
                     },
                     borderRadius: BorderRadius.circular(12),
@@ -1248,7 +1316,11 @@ Widget _buildClassActions(BuildContext context, Color color) {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              statusInfo['status'] == 'completed' ? Icons.check_circle : Icons.cancel,
+                              statusInfo['status'] == 'completed' 
+                                ? Icons.check_circle 
+                                : statusInfo['status'] == 'missed'
+                                ? Icons.cancel
+                                : Icons.block_flipped,
                               color: statusColor,
                               size: 20,
                             ),
@@ -1290,214 +1362,85 @@ Widget _buildClassActions(BuildContext context, Color color) {
     );
   }
 
-  void _showClearStatusDialog(BuildContext context, Color color) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.restart_alt,
-                      color: color,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Clear Event Status',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          event.title,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    icon: const Icon(Icons.close),
-                    style: IconButton.styleFrom(
-                      backgroundColor: color.withValues(alpha: 0.1),
-                      foregroundColor: color,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              // Confirmation message
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.warningAmber.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.warningAmber,
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.warningAmber.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.help_outline,
-                        color: AppTheme.warningAmber,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Clear Status',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: AppTheme.warningAmber,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Remove completed/missed status',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () async {
-                        Navigator.pop(dialogContext);
-                        await _clearEventStatus(context);
-                      },
-                      icon: const Icon(Icons.restart_alt),
-                      label: const Text('Clear'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.warningAmber,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _markEventAsCompleted(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     
-    event.isCompleted = true;
-    event.isMissed = false;
-    dataProvider.updateEvent(event);
-    
-    // Play completion sound (if not muted)
-    if (!dataProvider.muteRingtone) {
-      final audioPlayer = AudioPlayer();
-      try {
-        await audioPlayer.play(AssetSource('accept2.mp3'));
-      } catch (e) {
-        debugPrint('Error playing accept2.mp3: $e');
-      }
-    }
+    widget.event.isCompleted = true;
+    widget.event.isMissed = false;
+    widget.event.isCancelled = false;
+    dataProvider.updateEvent(widget.event);
     
     Navigator.pop(context);
     
-    AppTheme.showTopNotification(
-      context,
-      'Event marked as completed!',
-      type: NotificationType.success,
-    );
+    // Show gamification popup only for today's events
+    final now = DateTime.now();
+    final isToday = widget.event.startTime.year == now.year &&
+                    widget.event.startTime.month == now.month &&
+                    widget.event.startTime.day == now.day;
+    if (isToday) {
+      await GamificationPopupService.showEventStatusPopup(
+        context,
+        widget.event.title,
+        'completed',
+      );
+    }
   }
 
   Future<void> _markEventAsMissed(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     
-    event.isCompleted = false;
-    event.isMissed = true;
-    dataProvider.updateEvent(event);
-    
-    // Play warning sound (if not muted)
-    if (!dataProvider.muteRingtone) {
-      final audioPlayer = AudioPlayer();
-      try {
-        await audioPlayer.play(AssetSource('notification.mp3'));
-      } catch (e) {
-        debugPrint('Error playing notification.mp3: $e');
-      }
-    }
+    widget.event.isCompleted = false;
+    widget.event.isMissed = true;
+    widget.event.isCancelled = false;
+    dataProvider.updateEvent(widget.event);
     
     Navigator.pop(context);
     
-    AppTheme.showTopNotification(
-      context,
-      'Event marked as missed.',
-      type: NotificationType.error,
-    );
+    // Show gamification popup only for today's events
+    final now = DateTime.now();
+    final isToday = widget.event.startTime.year == now.year &&
+                    widget.event.startTime.month == now.month &&
+                    widget.event.startTime.day == now.day;
+    if (isToday) {
+      await GamificationPopupService.showEventStatusPopup(
+        context,
+        widget.event.title,
+        'missed',
+      );
+    }
+  }
+
+  Future<void> _markEventAsCancelled(BuildContext context) async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    widget.event.isCompleted = false;
+    widget.event.isMissed = false;
+    widget.event.isCancelled = true;
+    dataProvider.updateEvent(widget.event);
+    
+    Navigator.pop(context);
+    
+    // Show gamification popup only for today's events
+    final now = DateTime.now();
+    final isToday = widget.event.startTime.year == now.year &&
+                    widget.event.startTime.month == now.month &&
+                    widget.event.startTime.day == now.day;
+    if (isToday) {
+      await GamificationPopupService.showEventStatusPopup(
+        context,
+        widget.event.title,
+        'cancelled',
+      );
+    }
   }
 
   Future<void> _clearEventStatus(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     
-    event.isCompleted = false;
-    event.isMissed = false;
-    dataProvider.updateEvent(event);
+    widget.event.isCompleted = false;
+    widget.event.isMissed = false;
+    widget.event.isCancelled = false;
+    dataProvider.updateEvent(widget.event);
     
     Navigator.pop(context);
     

@@ -300,8 +300,9 @@ class _EventsPageState extends State<EventsPage>
     // Check if event is marked
     final isMarked = event.isCompleted || 
                      event.isMissed || 
+                     event.isCancelled ||
                      (event.classification == 'class' && 
-                      dataProvider.getAttendanceForDate(event.category ?? 'Unknown', event.startTime) != null);
+                      dataProvider.getAttendanceForDate(event.title, event.startTime) != null);
     
     // Determine status text
     String statusText;

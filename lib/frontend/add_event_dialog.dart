@@ -304,6 +304,9 @@ void _saveEvent() async {
   final audioPlayer = AudioPlayer();
 
   if (widget.editEvent != null) {
+    final oldClassification = widget.editEvent!.classification;
+    final classificationChanged = oldClassification != _selectedClassification;
+    
     widget.editEvent!.title = _titleController.text;
     widget.editEvent!.classification = _selectedClassification;
     widget.editEvent!.category = _selectedCategory;
@@ -316,12 +319,33 @@ void _saveEvent() async {
     widget.editEvent!.priority = _selectedPriority;
     widget.editEvent!.estimatedDuration =
         _isTaskType ? _estimatedDuration : null;
-    widget.editEvent!.isCompleted = _isCompleted;
     widget.editEvent!.isImportant = _isImportant;
     widget.editEvent!.voiceNotes = _voiceNotes;
     widget.editEvent!.reminders = _reminders;
     widget.editEvent!.color = _customColor;
     widget.editEvent!.periodCount = _periodCount;
+    
+    // If classification changed, reset all marking/status back to unmarked
+    if (classificationChanged) {
+      widget.editEvent!.isCompleted = false;
+      widget.editEvent!.isMissed = false;
+      widget.editEvent!.isCancelled = false;
+      widget.editEvent!.completionColor = null;
+      
+      // If it was previously a class event, remove any attendance record
+      if (oldClassification == 'class') {
+        final attendance = dataProvider.getAttendanceForDate(
+          widget.editEvent!.title,
+          widget.editEvent!.startTime,
+        );
+        if (attendance != null) {
+          dataProvider.deleteAttendanceRecord(attendance.id);
+        }
+      }
+    } else {
+      widget.editEvent!.isCompleted = _isCompleted;
+    }
+    
     dataProvider.updateEvent(widget.editEvent!);
   } else {
     final event = Event(

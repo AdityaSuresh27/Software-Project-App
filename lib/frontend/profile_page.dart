@@ -247,8 +247,23 @@ class _ProfilePageState extends State<ProfilePage>
               const SizedBox(height: 24),
               _buildSection(
                 context,
-                'About',
+                'Gamification',
                 5,
+                [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.celebration_outlined),
+                    title: const Text('Event Popups'),
+                    subtitle: const Text('Show celebratory popups when marking events'),
+                    value: dataProvider.gamificationEnabled,
+                    onChanged: (value) => dataProvider.setGamificationEnabled(value),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildSection(
+                context,
+                'About',
+                6,
                 [
                   _buildInfoTile('Version', '2.0.0', Icons.info_outline),
                   _buildTile(

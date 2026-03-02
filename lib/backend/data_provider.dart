@@ -54,6 +54,7 @@ class DataProvider extends ChangeNotifier {
   bool _notifyEventStart = true;  // Notifications when event start time arrives
   bool _muteStartupSound = false; // Mute app launch sound
   bool _muteRingtone = false;     // Mute notification sounds
+  bool _gamificationEnabled = true; // Gamified popups for event completion
   
   // ========== INITIALIZATION & READY STATE ==========
   /// Completes when both _loadData() and _checkAuthStatus() finish
@@ -73,6 +74,7 @@ class DataProvider extends ChangeNotifier {
   bool get notifyEventStart => _notifyEventStart;
   bool get muteStartupSound => _muteStartupSound;
   bool get muteRingtone => _muteRingtone;
+  bool get gamificationEnabled => _gamificationEnabled;
 
   /// Constructor - Initializes data loading from SharedPreferences
   /// Loads both user data and authentication status concurrently
@@ -92,6 +94,7 @@ Future<void> _checkAuthStatus() async {
     _notifyEventStart = prefs.getBool('notifyEventStart') ?? true;
     _muteStartupSound = prefs.getBool('muteStartupSound') ?? false;
     _muteRingtone = prefs.getBool('muteRingtone') ?? false;
+    _gamificationEnabled = prefs.getBool('gamificationEnabled') ?? true;
 
     final lastActiveStr = prefs.getString('lastActiveAt');
     if (lastActiveStr != null) {
@@ -209,6 +212,13 @@ Future<void> _checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('muteRingtone', muted);
     _muteRingtone = muted;
+    notifyListeners();
+  }
+
+  Future<void> setGamificationEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('gamificationEnabled', enabled);
+    _gamificationEnabled = enabled;
     notifyListeners();
   }
 
@@ -435,12 +445,12 @@ Future<void> _checkAuthStatus() async {
     final now = DateTime.now();
     final upcoming = _events
         .where((e) {
-          // Exclude if completed or missed
-          if (e.isCompleted || e.isMissed) return false;
+          // Exclude if completed, missed, or cancelled
+          if (e.isCompleted || e.isMissed || e.isCancelled) return false;
           
           // Exclude if attendance is marked (for class events)
           if (e.classification == 'class') {
-            final attendance = getAttendanceForDate(e.category ?? 'Unknown', e.startTime);
+            final attendance = getAttendanceForDate(e.title, e.startTime);
             if (attendance != null) return false;
           }
           
@@ -473,7 +483,45 @@ Future<void> _checkAuthStatus() async {
     };
   }
 
-  // Voice note methods
+  // Get gamification stats for today (only marked events)
+  Map<String, int> getDayGamificationStats(DateTime date) {
+    final todayEvents = getEventsForDay(date);
+    
+    int successful = 0;
+    int unsuccessful = 0;
+    
+    for (final event in todayEvents) {
+      if (event.classification == 'class') {
+        // Check if attendance is marked
+        final attendance = getAttendanceForDate(event.title, event.startTime);
+        if (attendance != null) {
+          // Cancelled events don't count toward stats
+          if (attendance.status.name == 'cancelled') {
+            continue;
+          } else if (attendance.status.name == 'present' || attendance.status.name == 'late' || attendance.status.name == 'excused') {
+            successful++;
+          } else if (attendance.status.name == 'absent') {
+            unsuccessful++;
+          }
+        }
+      } else {
+        // Non-class events
+        // Cancelled events don't count toward stats at all
+        if (event.isCancelled) {
+          continue;
+        } else if (event.isCompleted) {
+          successful++;
+        } else if (event.isMissed) {
+          unsuccessful++;
+        }
+      }
+    }
+    
+    return {
+      'successful': successful,
+      'unsuccessful': unsuccessful,
+    };
+  }
   void addVoiceNoteToEvent(String eventId, VoiceNote voiceNote) {
     final event = _events.firstWhere((e) => e.id == eventId);
     event.voiceNotes = [...event.voiceNotes, voiceNote];

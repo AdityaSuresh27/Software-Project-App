@@ -471,12 +471,12 @@ Widget _buildUpcomingEvents(BuildContext context, DataProvider dataProvider, Dat
   final todayEvents = dataProvider.getEventsForDay(now);
   
   final upcomingEvents = todayEvents.where((event) {
-    // Exclude if completed or missed
-    if (event.isCompleted || event.isMissed) return false;
+    // Exclude if completed, missed, or cancelled
+    if (event.isCompleted || event.isMissed || event.isCancelled) return false;
     
     // Exclude if attendance is marked (for class events)
     if (event.classification == 'class') {
-      final attendance = dataProvider.getAttendanceForDate(event.category ?? 'Unknown', event.startTime);
+      final attendance = dataProvider.getAttendanceForDate(event.title, event.startTime);
       if (attendance != null) return false;
     }
     
@@ -575,8 +575,9 @@ Widget _buildUpcomingEvents(BuildContext context, DataProvider dataProvider, Dat
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     final isMarked = event.isCompleted || 
                      event.isMissed || 
+                     event.isCancelled ||
                      (event.classification == 'class' && 
-                      dataProvider.getAttendanceForDate(event.category ?? 'Unknown', event.startTime) != null);
+                      dataProvider.getAttendanceForDate(event.title, event.startTime) != null);
     
     // Determine time status
     String timeStatusText;
