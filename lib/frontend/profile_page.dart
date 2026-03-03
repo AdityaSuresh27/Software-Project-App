@@ -175,7 +175,7 @@ class _ProfilePageState extends State<ProfilePage>
                     leading: const Icon(Icons.text_fields_rounded),
                     title: const Text('Font Style'),
                     subtitle: Text(fontProvider.fontDisplayName),
-                    trailing: PopupMenuButton<String>(
+                    trailing: AppPopupMenuButton<String>(
                       onSelected: (String value) {
                         fontProvider.setFontFamily(value);
                       },
@@ -189,7 +189,6 @@ class _ProfilePageState extends State<ProfilePage>
                           child: Text('Original (Inter)'),
                         ),
                       ],
-                      icon: const Icon(Icons.more_vert),
                     ),
                   ),
                 ],
