@@ -121,12 +121,10 @@ class _CalendarPageState extends State<CalendarPage>
         ),
       ),
       const SizedBox(width: 12),
-      const Text(
-        'Calendar',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.3,
+      Expanded(
+        child: Text(
+          'Calendar',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
     ],
@@ -400,7 +398,7 @@ class _CalendarPageState extends State<CalendarPage>
                             ),
                             child: Text(
                               event.classification[0].toUpperCase() + event.classification.substring(1),
-                              style: TextStyle(
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: color,

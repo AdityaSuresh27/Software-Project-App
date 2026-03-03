@@ -1,4 +1,18 @@
-// otp_screen.dart
+/// OtpScreen - One-Time Password Verification
+/// 
+/// Verification screen for multi-factor authentication during sign-up.
+/// 
+/// Features:
+/// - 6-digit OTP input with individual digit boxes
+/// - Auto-focus movement between boxes
+/// - Shake animation on incorrect OTP
+/// - Resend OTP option with countdown timer
+/// - Auto-clear and auto-advance on digit entry
+/// - Error state indicators
+/// - Loading state during verification
+/// 
+/// User enters OTP sent via email/SMS to verify account creation.
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme.dart';

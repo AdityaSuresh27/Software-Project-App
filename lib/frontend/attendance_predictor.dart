@@ -1,4 +1,20 @@
-// attendance_predictor.dart
+/// AttendancePredictorPage - Attendance Forecast & Risk Projection
+/// 
+/// Predictive tool for simulating future attendance based on current patterns
+/// and projected leave dates.
+/// 
+/// Features:
+/// - Visual calendar for marking leave/absence dates
+/// - Real-time attendance percentage projection
+/// - Multi-course attendance tracking
+/// - Projected attendance for semester end
+/// - Risk threshold indicator (<75% = at-risk)
+/// - Customize leave date ranges and excluded dates
+/// - Toggle to treat unmarked dates as present/absent
+/// 
+/// Helps students identify which dates they can afford to miss while
+/// maintaining safe attendance levels for grade qualification.
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';

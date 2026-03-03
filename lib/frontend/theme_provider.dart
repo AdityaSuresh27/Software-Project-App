@@ -1,4 +1,18 @@
-//theme_provider.dart
+///**
+/// ThemeProvider - Theme Mode Management
+/// 
+/// ChangeNotifier for managing light/dark/system theme modes across the app.
+/// Persists theme preference to SharedPreferences for retention across sessions.
+/// 
+/// Provides:
+/// - Theme mode getter/setter (light/dark/system)
+/// - Boolean flags for quick mode checking (isDarkMode, isLightMode, etc.)
+/// - Automatic persistence and retrieval of user's theme preference
+/// - Notification to all listeners when theme changes
+/// 
+/// Usage: Wrap app with Consumer<ThemeProvider> to react to theme changes.
+///
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

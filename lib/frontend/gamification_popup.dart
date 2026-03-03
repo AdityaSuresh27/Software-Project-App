@@ -1,4 +1,17 @@
-// Gamification Popups - Celebratory and motivational event status popups
+/// GamificationPopupService & GamificationPopup - Celebratory Status Notifications
+/// 
+/// Displays motivational popups with animations and sounds when events are 
+/// completed, missed, or attendance is marked.
+/// 
+/// Features:
+/// - Pop-up animations with celebratory effects for completed events
+/// - Positive/neutral/negative animations based on event status
+/// - Point/streak calculation and display
+/// - Sound effects for engaging feedback
+/// - Custom messages based on event type
+/// 
+/// Enhances user engagement through gamification mechanics and positive reinforcement.
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';

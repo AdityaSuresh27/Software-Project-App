@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
+import 'font_provider.dart';
 import 'auth_screen.dart';
 import '../backend/data_provider.dart';
 import '../backend/models.dart';
@@ -116,6 +117,7 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final fontProvider = Provider.of<FontProvider>(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
     final dataProvider = Provider.of<DataProvider>(context);
     
@@ -136,12 +138,10 @@ class _ProfilePageState extends State<ProfilePage>
         ),
       ),
       const SizedBox(width: 12),
-      const Text(
-        'Profile & Settings',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.3,
+      Expanded(
+        child: Text(
+          'Profile & Settings',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
     ],
@@ -169,6 +169,28 @@ class _ProfilePageState extends State<ProfilePage>
                     onChanged: (value) {
                       themeProvider.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
                     },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.text_fields_rounded),
+                    title: const Text('Font Style'),
+                    subtitle: Text(fontProvider.fontDisplayName),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (String value) {
+                        fontProvider.setFontFamily(value);
+                      },
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'minimalistic',
+                          child: Text('Minimalistic (Poppins)'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'original',
+                          child: Text('Original (Inter)'),
+                        ),
+                      ],
+                      icon: const Icon(Icons.more_vert),
+                    ),
                   ),
                 ],
               ),
@@ -376,15 +398,15 @@ class _ProfilePageState extends State<ProfilePage>
         Icons.verified_user_outlined,
         color: isMfaEnabled ? AppTheme.successGreen : null,
       ),
-      title: const Text(
+      title: Text(
         'Two-Factor Authentication',
-        style: TextStyle(fontWeight: FontWeight.w600),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
         isMfaEnabled
             ? 'Extra login step is ON — tap to disable'
             : 'Tap to add an extra layer of security',
-        style: TextStyle(
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
           fontSize: 12,
           color: isMfaEnabled ? AppTheme.successGreen : null,
         ),
@@ -499,7 +521,7 @@ class _ProfilePageState extends State<ProfilePage>
                     ),
                     child: Text(
                       'Student',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSecondaryContainer,

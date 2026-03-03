@@ -1,4 +1,20 @@
-// event_action_dialog.dart
+/// EventActionDialog - Event Details & Actions View
+/// 
+/// Full-screen dialog displaying detailed event information with action buttons.
+/// 
+/// Features:
+/// - Event title, classification, and priority display
+/// - Date, time, and location information
+/// - Notes and voice note attachments
+/// - Mark as complete/incomplete
+/// - Edit event details
+/// - Delete event
+/// - Quick action buttons (add to calendar, set reminders)
+/// - Visual categorization with color coding
+/// - Attendance tracking for timetable-based classes
+/// 
+/// Changes are persisted to DataProvider and reflected across all views.
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';

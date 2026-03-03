@@ -1,4 +1,18 @@
-// forgot_password_page.dart
+/// ForgotPasswordPage - Password Recovery Interface
+/// 
+/// Self-service password reset screen for users who forgot their credentials.
+/// 
+/// Features:
+/// - Email input field for account identification
+/// - Send password reset link via email
+/// - Success confirmation message
+/// - Animated transitions between states
+/// - Back button to login screen
+/// - Validation for email format
+/// - Loading state during email send
+/// 
+/// User receives reset link via email to create new password securely.
+
 import 'package:flutter/material.dart';
 import 'theme.dart';
 

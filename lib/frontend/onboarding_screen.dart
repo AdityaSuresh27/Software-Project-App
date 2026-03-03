@@ -1,4 +1,17 @@
-// onboarding_screen.dart
+/// OnboardingScreen - First-Time User Introduction
+/// 
+/// Guided introduction screen showing ClassFlow features for new users.
+/// 
+/// Features:
+/// - 4-page carousel showcasing app key features
+/// - Smooth page transitions with swipe/button navigation
+/// - Feature icons and descriptions for each page
+/// - Progress indicator dots at bottom
+/// - Skip option to go directly to login
+/// - "Get Started" button on final page
+/// 
+/// Displayed on first app launch if OAuth/auth validation isn't established.
+
 import 'package:flutter/material.dart';
 import 'auth_screen.dart';
 

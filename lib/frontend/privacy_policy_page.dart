@@ -1,4 +1,17 @@
-// privacy_policy_page.dart
+/// PrivacyPolicyPage - Privacy & Terms Information
+/// 
+/// Displays the app's Privacy Policy and Terms of Service to users.
+/// 
+/// Features:
+/// - Comprehensive privacy policy information
+/// - Data handling and security practices
+/// - Terms of service compliance
+/// - Data retention and user rights
+/// - Last updated date display
+/// - Scrollable content for easy navigation
+/// 
+/// Accessed from ProfilePage settings for user reference and compliance.
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'theme.dart';
@@ -27,12 +40,10 @@ class PrivacyPolicyPage extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Privacy Policy',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
+            Expanded(
+              child: Text(
+                'Privacy Policy',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
           ],
@@ -91,22 +102,17 @@ class PrivacyPolicyPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Your Privacy Matters',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
                           color: Colors.white,
-                          letterSpacing: -0.5,
                           height: 1.2,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         'We respect your privacy and are committed to protecting your personal data.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.white.withValues(alpha: 0.95),
                           height: 1.5,
                         ),
@@ -259,7 +265,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   children: [
                     Text(
                       'Section $number',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: color,
@@ -337,7 +343,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   children: [
                     Text(
                       'Section 2',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.assignmentPurple,
@@ -493,7 +499,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   children: [
                     Text(
                       'Section 4',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.examOrange,
@@ -539,9 +545,9 @@ class PrivacyPolicyPage extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Important Notice',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
+                        fontSize: 16,
                         color: isDark 
                             ? AppTheme.warningAmber.withValues(alpha: 0.9)
                             : AppTheme.warningAmber,
@@ -618,7 +624,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   children: [
                     Text(
                       'Section 7',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.successGreen,
@@ -679,9 +685,9 @@ class PrivacyPolicyPage extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         'support@classflow.app',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
+                          fontSize: 16,
                           color: AppTheme.successGreen,
                           letterSpacing: 0.2,
                         ),

@@ -1,4 +1,19 @@
-// class_attendance_details_page.dart
+/// ClassAttendanceDetailsPage - Detailed Course Attendance Breakdown
+/// 
+/// Shows session-by-session attendance records for a specific course.
+/// 
+/// Features:
+/// - List of all class dates with attendance status (present/absent/unmarked)
+/// - Edit attendance status for individual sessions
+/// - View current attendance percentage
+/// - Identify at-risk sessions (missing critical classes)
+/// - Mark attendance for unmarked sessions
+/// - Delete incorrect attendance records
+/// - Use Attendance Predictor to forecast semester attendance
+/// - Color-coded status indicators
+/// 
+/// Changes immediately update course attendance stats and overall progress.
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';

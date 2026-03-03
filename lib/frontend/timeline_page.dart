@@ -1,4 +1,18 @@
-// timeline_page.dart
+/// TimelinePage - Hour-by-Hour Schedule View
+/// 
+/// Displays events in a vertical timeline format organized by time of day.
+/// 
+/// Features:
+/// - Scrollable hour-by-hour schedule for selected date
+/// - Events positioned based on their start time
+/// - Color-coded by event classification
+/// - Navigation to previous/next days with date picker
+/// - Tap event to view/edit details
+/// - Current time indicator
+/// - All-day events displayed at top
+/// 
+/// Syncs with DataProvider to show real-time event updates.
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -126,11 +140,7 @@ class _TimelinePageState extends State<TimelinePage>
           isToday 
               ? 'Timeline - Today'
               : 'Timeline - ${DateFormat('MMM dd').format(_selectedDate)}',
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.3,
-          ),
+          style: Theme.of(context).textTheme.titleLarge,
           overflow: TextOverflow.ellipsis,
         ),
       ),
@@ -212,7 +222,7 @@ class _TimelinePageState extends State<TimelinePage>
           width: 70,
           child: Text(
             DateFormat('h:mm a').format(blockTime),
-            style: TextStyle(
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontSize: 13,
               fontWeight: isCurrentHour ? FontWeight.w700 : FontWeight.w500,
               fontFamily: 'monospace',
@@ -355,7 +365,7 @@ class _TimelinePageState extends State<TimelinePage>
                       Text(
                         event.classification[0].toUpperCase() + 
                             event.classification.substring(1),
-                        style: TextStyle(
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: color,
@@ -369,7 +379,7 @@ class _TimelinePageState extends State<TimelinePage>
                 const SizedBox(width: 4),
                 Text(
                   duration,
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontSize: 12,
                     fontFamily: 'monospace',
                     color: color,
@@ -417,7 +427,7 @@ class _TimelinePageState extends State<TimelinePage>
                     const SizedBox(width: 4),
                     Text(
                       'Important',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.warningAmber,

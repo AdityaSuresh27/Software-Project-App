@@ -126,12 +126,10 @@ class _EventsPageState extends State<EventsPage>
         ),
       ),
       const SizedBox(width: 12),
-      const Text(
-        'Events',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.3,
+      Expanded(
+        child: Text(
+          'Events',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
     ],
@@ -483,7 +481,7 @@ class _EventsPageState extends State<EventsPage>
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,

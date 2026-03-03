@@ -1,15 +1,22 @@
-/// AppTheme - Centralized Design System
+﻿/// AppTheme - Centralized Design System & Typography
 /// 
 /// Defines all colors, typography, and theme configurations used throughout ClassFlow.
 /// 
 /// Features:
-/// - Professional color palette for all UI elements
+/// - Professional & modern color palette for all UI elements
+/// - Premium typography using Poppins, Playfair Display, and Inter fonts
 /// - Event type-specific colors (class, exam, assignment, etc.)
 /// - Attendance status colors (Safe/Warning/At Risk)
 /// - Priority level colors (Low/Medium/High/Critical)
-/// - Reusable TextTheme styles
+/// - Reusable TextTheme styles with improved visual hierarchy
 /// - Light and dark theme support
 /// - Material 3 compatibility
+/// 
+/// Font Strategy:
+/// - Display/Heading: Inter ExtraLight w200 (very light, modern)
+/// - Title/Subheading: Inter Light w300-Regular w400 (clean, contemporary)
+/// - Body/Content: Inter w200-w400 (ultra-light to regular, readable)
+/// - Labels/Buttons: Inter w500-w600 (Medium to SemiBold, crisp)
 /// 
 /// Usage:
 ///   Text('Hello', style: TextStyle(color: AppTheme.primaryBlue))
@@ -65,67 +72,78 @@ class AppTheme {
       surfaceTintColor: Colors.transparent,
     ),
     textTheme: TextTheme(
+      /// Display Large - Premium page titles using Inter ExtraLight
       displayLarge: GoogleFonts.inter(
-        fontSize: 36,  // was 32
-        fontWeight: FontWeight.w700,
+        fontSize: 38,
+        fontWeight: FontWeight.w200,
+        letterSpacing: -0.8,
+        color: const Color(0xFF111827),
+      ),
+      /// Display Medium - Large section headers with visual impact
+      displayMedium: GoogleFonts.inter(
+        fontSize: 34,
+        fontWeight: FontWeight.w200,
         letterSpacing: -0.5,
         color: const Color(0xFF111827),
       ),
-      displayMedium: GoogleFonts.inter(
-        fontSize: 32,  // was 28
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.3,
-        color: const Color(0xFF111827),
-      ),
+      /// Title Large - Main heading for content sections
       titleLarge: GoogleFonts.inter(
-        fontSize: 24,  // was 22
-        fontWeight: FontWeight.w600,
+        fontSize: 26,
+        fontWeight: FontWeight.w300,
         color: const Color(0xFF111827),
       ),
+      /// Title Medium - Secondary headings with good hierarchy
       titleMedium: GoogleFonts.inter(
-        fontSize: 18,  // was 16
-        fontWeight: FontWeight.w600,
+        fontSize: 20,
+        fontWeight: FontWeight.w300,
         color: const Color(0xFF111827),
       ),
+      /// Title Small - Subheadings and smaller sections
       titleSmall: GoogleFonts.inter(
-        fontSize: 16,  // was 14
-        fontWeight: FontWeight.w600,
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
         color: const Color(0xFF374151),
       ),
+      /// Body Large - Primary content text with good readability
       bodyLarge: GoogleFonts.inter(
-        fontSize: 18,  // was 16
-        fontWeight: FontWeight.w400,
+        fontSize: 18,
+        fontWeight: FontWeight.w200,
         color: const Color(0xFF111827),
-        height: 1.5,
+        height: 1.6,
       ),
+      /// Body Medium - Standard paragraph and description text
       bodyMedium: GoogleFonts.inter(
-        fontSize: 16,  // was 14
-        fontWeight: FontWeight.w400,
+        fontSize: 16,
+        fontWeight: FontWeight.w200,
         color: const Color(0xFF4B5563),
+        height: 1.6,
+      ),
+      /// Body Small - Secondary content and helper text
+      bodySmall: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w200,
+        color: const Color(0xFF6B7280),
         height: 1.5,
       ),
-      bodySmall: GoogleFonts.inter(
-        fontSize: 14,  // was 12
-        fontWeight: FontWeight.w400,
-        color: const Color(0xFF6B7280),
-        height: 1.4,
-      ),
+      /// Label Large - Buttons and action labels (bold)
       labelLarge: GoogleFonts.inter(
-        fontSize: 16,  // was 14
+        fontSize: 16,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
         color: const Color(0xFF374151),
       ),
+      /// Label Medium - Medium emphasis labels and badges
       labelMedium: GoogleFonts.inter(
-        fontSize: 14,  // was 12
+        fontSize: 14,
         fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
+        letterSpacing: 0.3,
         color: const Color(0xFF6B7280),
       ),
+      /// Label Small - Minimal labels and captions
       labelSmall: GoogleFonts.inter(
-        fontSize: 13,  // was 11
+        fontSize: 13,
         fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
+        letterSpacing: 0.4,
         color: const Color(0xFF9CA3AF),
       ),
     ),
@@ -190,68 +208,354 @@ class AppTheme {
       surfaceTintColor: Colors.transparent,
     ),
     textTheme: TextTheme(
+      /// Display Large - Premium page titles using Inter ExtraLight for dark mode
       displayLarge: GoogleFonts.inter(
-        fontSize: 36,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.5,
-        color: const Color(0xFFF1F5F9), 
+        fontSize: 38,
+        fontWeight: FontWeight.w200,
+        letterSpacing: -0.8,
+        color: const Color(0xFFF1F5F9),
       ),
+      /// Display Medium - Large section headers with visual impact in dark mode
       displayMedium: GoogleFonts.inter(
-        fontSize: 32,
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.3,
-        color: const Color(0xFFF1F5F9), 
+        fontSize: 34,
+        fontWeight: FontWeight.w200,
+        letterSpacing: -0.5,
+        color: const Color(0xFFF1F5F9),
       ),
+      /// Title Large - Main heading for content sections in dark mode
       titleLarge: GoogleFonts.inter(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: const Color(0xFFF1F5F9), 
+        fontSize: 26,
+        fontWeight: FontWeight.w300,
+        color: const Color(0xFFF1F5F9),
       ),
+      /// Title Medium - Secondary headings with good hierarchy in dark mode
       titleMedium: GoogleFonts.inter(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: const Color(0xFFF1F5F9), 
+        fontSize: 20,
+        fontWeight: FontWeight.w300,
+        color: const Color(0xFFF1F5F9),
       ),
+      /// Title Small - Subheadings and smaller sections in dark mode
       titleSmall: GoogleFonts.inter(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: const Color(0xFFCBD5E1), 
+        fontWeight: FontWeight.w400,
+        color: const Color(0xFFCBD5E1),
       ),
+      /// Body Large - Primary content text with good readability in dark mode
       bodyLarge: GoogleFonts.inter(
         fontSize: 18,
-        fontWeight: FontWeight.w400,
-        color: const Color(0xFFF1F5F9), 
-        height: 1.5,
+        fontWeight: FontWeight.w200,
+        color: const Color(0xFFF1F5F9),
+        height: 1.6,
       ),
+      /// Body Medium - Standard paragraph and description text in dark mode
       bodyMedium: GoogleFonts.inter(
         fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: const Color(0xFFCBD5E1), 
-        height: 1.5,
+        fontWeight: FontWeight.w200,
+        color: const Color(0xFFCBD5E1),
+        height: 1.6,
       ),
+      /// Body Small - Secondary content and helper text in dark mode
       bodySmall: GoogleFonts.inter(
         fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: const Color(0xFF94A3B8), 
-        height: 1.4,
+        fontWeight: FontWeight.w200,
+        color: const Color(0xFF94A3B8),
+        height: 1.5,
       ),
+      /// Label Large - Buttons and action labels (bold) in dark mode
       labelLarge: GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
-        color: const Color(0xFFCBD5E1), 
+        color: const Color(0xFFCBD5E1),
       ),
+      /// Label Medium - Medium emphasis labels and badges in dark mode
       labelMedium: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
-        color: const Color(0xFF94A3B8), 
+        letterSpacing: 0.3,
+        color: const Color(0xFF94A3B8),
       ),
+      /// Label Small - Minimal labels and captions in dark mode
       labelSmall: GoogleFonts.inter(
         fontSize: 13,
         fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
-        color: const Color(0xFF64748B), 
+        letterSpacing: 0.4,
+        color: const Color(0xFF64748B),
+      ),
+    ),
+    appBarTheme: const AppBarTheme(
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: Color(0xFF0F172A),
+      foregroundColor: Color(0xFFF1F5F9),
+      centerTitle: false,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFF1F5F9),
+      ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF1E293B),
+      elevation: 8,
+      selectedItemColor: primaryBlue,
+      unselectedItemColor: Color(0xFF64748B),
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: const Color(0xFF334155),
+      labelStyle: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFFCBD5E1),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF334155),
+      thickness: 1,
+      space: 1,
+    ),
+  );
+
+  /// MINIMALISTIC THEME - Using Poppins font (classic, clean)
+  /// Alternative theme with traditional Poppins font for users preferring classic look
+  static ThemeData minimalisticLightTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+    primaryColor: primaryBlue,
+    colorScheme: const ColorScheme.light(
+      primary: primaryBlue,
+      secondary: secondaryTeal,
+      tertiary: accentPurple,
+      surface: Colors.white,
+      surfaceContainerHighest: Color(0xFFF3F4F6),
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: Color(0xFF111827),
+      error: errorRed,
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+    ),
+    textTheme: TextTheme(
+      /// Display Large - Poppins Bold for emphasis
+      displayLarge: GoogleFonts.poppins(
+        fontSize: 38,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.8,
+        color: const Color(0xFF111827),
+      ),
+      /// Display Medium - Large headers
+      displayMedium: GoogleFonts.poppins(
+        fontSize: 34,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.5,
+        color: const Color(0xFF111827),
+      ),
+      /// Title Large - Main headings
+      titleLarge: GoogleFonts.poppins(
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFF111827),
+      ),
+      /// Title Medium - Secondary headings
+      titleMedium: GoogleFonts.poppins(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFF111827),
+      ),
+      /// Title Small - Subheadings
+      titleSmall: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: const Color(0xFF374151),
+      ),
+      /// Body Large - Primary content
+      bodyLarge: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        color: const Color(0xFF111827),
+        height: 1.6,
+      ),
+      /// Body Medium - Standard text
+      bodyMedium: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: const Color(0xFF4B5563),
+        height: 1.6,
+      ),
+      /// Body Small - Secondary text
+      bodySmall: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: const Color(0xFF6B7280),
+        height: 1.5,
+      ),
+      /// Label Large - Button labels (bold)
+      labelLarge: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+        color: const Color(0xFF374151),
+      ),
+      /// Label Medium - Medium emphasis
+      labelMedium: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.3,
+        color: const Color(0xFF6B7280),
+      ),
+      /// Label Small - Captions
+      labelSmall: GoogleFonts.poppins(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.4,
+        color: const Color(0xFF9CA3AF),
+      ),
+    ),
+    appBarTheme: const AppBarTheme(
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: Colors.white,
+      foregroundColor: Color(0xFF111827),
+      centerTitle: false,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF111827),
+      ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      elevation: 8,
+      selectedItemColor: primaryBlue,
+      unselectedItemColor: Color(0xFF9CA3AF),
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: const Color(0xFFE5E7EB),
+      labelStyle: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF374151),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFFE5E7EB),
+      thickness: 1,
+      space: 1,
+    ),
+  );
+
+  /// Minimalistic Dark Theme - Using Poppins font
+  static ThemeData minimalisticDarkTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: const Color(0xFF0F172A),
+    primaryColor: primaryBlue,
+    colorScheme: const ColorScheme.dark(
+      primary: primaryBlue,
+      secondary: secondaryTeal,
+      tertiary: accentPurple,
+      surface: Color(0xFF1E293B),
+      surfaceContainerHighest: Color(0xFF334155),
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: Color(0xFFF1F5F9),
+      error: errorRed,
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: const Color(0xFF1E293B),
+      surfaceTintColor: Colors.transparent,
+    ),
+    textTheme: TextTheme(
+      /// Display Large - Poppins Bold
+      displayLarge: GoogleFonts.poppins(
+        fontSize: 38,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.8,
+        color: const Color(0xFFF1F5F9),
+      ),
+      /// Display Medium - Large headers
+      displayMedium: GoogleFonts.poppins(
+        fontSize: 34,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.5,
+        color: const Color(0xFFF1F5F9),
+      ),
+      /// Title Large - Main headings
+      titleLarge: GoogleFonts.poppins(
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFFF1F5F9),
+      ),
+      /// Title Medium - Secondary headings
+      titleMedium: GoogleFonts.poppins(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFFF1F5F9),
+      ),
+      /// Title Small - Subheadings
+      titleSmall: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: const Color(0xFFCBD5E1),
+      ),
+      /// Body Large - Primary content
+      bodyLarge: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        color: const Color(0xFFF1F5F9),
+        height: 1.6,
+      ),
+      /// Body Medium - Standard text
+      bodyMedium: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: const Color(0xFFCBD5E1),
+        height: 1.6,
+      ),
+      /// Body Small - Secondary text
+      bodySmall: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: const Color(0xFF94A3B8),
+        height: 1.5,
+      ),
+      /// Label Large - Button labels
+      labelLarge: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+        color: const Color(0xFFCBD5E1),
+      ),
+      /// Label Medium - Medium emphasis
+      labelMedium: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.3,
+        color: const Color(0xFF94A3B8),
+      ),
+      /// Label Small - Captions
+      labelSmall: GoogleFonts.poppins(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.4,
+        color: const Color(0xFF64748B),
       ),
     ),
     appBarTheme: const AppBarTheme(
@@ -326,6 +630,7 @@ class AppTheme {
         return priorityMedium;
     }
   }
+
   static IconData getClassificationIcon(String classification) {
     switch (classification.toLowerCase()) {
       case 'class':
@@ -342,10 +647,7 @@ class AppTheme {
         return Icons.event_outlined;
     }
   }
-  // Call this instead of ScaffoldMessenger.showSnackBar everywhere.
-  // Shows a polished banner pinned to the TOP of the screen so it never
-  // hides behind dialogs or the keyboard, and looks intentional rather
-  // than like a system error.
+
   static void showTopNotification(
     BuildContext context,
     String message, {
@@ -392,6 +694,7 @@ class AppTheme {
     overlay.insert(entry);
   }
 }
+
 enum NotificationType { success, error, warning, info }
 
 class _TopNotificationBanner extends StatefulWidget {
@@ -611,7 +914,7 @@ class AppDropdownItem<T> {
 }
 
 /// A styled popup menu button used throughout the app. It mimics the design of
-/// the “Options” menu on the Timetable page app bar: an icon inside a rounded
+/// the "Options" menu on the Timetable page app bar: an icon inside a rounded
 /// container with a light translucent background. Parameters allow customizing
 /// the icon, colors, and tooltip while preserving the common shape and padding.
 class AppPopupMenuButton<T> extends StatelessWidget {
@@ -637,7 +940,7 @@ class AppPopupMenuButton<T> extends StatelessWidget {
     this.iconData = Icons.more_vert_rounded,
     this.tooltip,
     this.iconColor = Colors.white,
-    this.backgroundColor = const Color(0x26ffffff), // white with 15% opacity
+    this.backgroundColor = const Color(0x26ffffff),
     this.iconSize = 20,
     this.shape = const RoundedRectangleBorder(
       borderRadius: BorderRadius.all(Radius.circular(16)),
@@ -652,8 +955,6 @@ class AppPopupMenuButton<T> extends StatelessWidget {
       shape: shape,
       onSelected: onSelected,
       itemBuilder: itemBuilder,
-      // if a custom child is supplied, use it; otherwise fall back to the
-      // styled icon container used previously.
       child: child,
       icon: child == null
           ? Container(

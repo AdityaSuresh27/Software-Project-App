@@ -1,4 +1,16 @@
-//manage_categories_page.dart
+/// ManageCategoriesPage - Custom Event Category Management
+/// 
+/// Allows users to create, edit, and delete custom categories for organizing events.
+/// 
+/// Features:
+/// - Add new categories with custom names
+/// - Edit existing category names
+/// - Delete categories
+/// - Assign categories to events for better organization
+/// - Automatic UI updates when categories change
+/// 
+/// Used with the event creation/editing dialogs to allow flexible categorization
+/// beyond the built-in classifications (Class, Exam, Assignment, etc.).
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -122,12 +134,10 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         ),
       ),
       const SizedBox(width: 12),
-      const Text(
-        'Categories',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.3,
+      Expanded(
+        child: Text(
+          'Categories',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
     ],
