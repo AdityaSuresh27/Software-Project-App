@@ -8,11 +8,11 @@
 /// - Sign up redirect for new users
 /// - Multi-factor authentication (MFA) option
 /// - OTP verification on sign-up
-/// - Avatar customization on successful sign-up (after OTP verification)
+/// - Avatar customisation on successful sign-up (after OTP verification)
 /// - Persistent session tracking (saved in SharedPreferences)
 /// - Form validation
 /// 
-/// On successful sign-up: OTP verification → Avatar customization → MainNavigation.
+/// On successful sign-up: OTP verification → Avatar customisation → MainNavigation.
 /// On successful login: (MFA if enabled) → MainNavigation.
 /// On failed login, displays error message with retry option.
 
@@ -142,7 +142,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             ),
           );
           if (verified == true && mounted) {
-            // After OTP verification on sign-up, show avatar customizer
+            // After OTP verification on sign-up, show avatar customiser
             final selectedAvatar = await showDialog<Avatar>(
               context: context,
               barrierDismissible: false,
@@ -150,11 +150,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: AvatarCustomizer(
-                  initialAvatar: Avatar(),
-                  onAvatarSelected: (avatar) {
-                    Navigator.pop(context, avatar);
-                  },
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  child: AvatarCustomizer(
+                    initialAvatar: Avatar(),
+                    onAvatarSelected: (avatar) {},
+                  ),
                 ),
               ),
             );

@@ -21,6 +21,7 @@ import 'theme.dart';
 import 'theme_provider.dart';
 import 'auth_screen.dart';
 import '../backend/data_provider.dart';
+import '../backend/models.dart';
 import 'manage_categories_page.dart';
 import 'privacy_policy_page.dart';
 import 'animated_avatar.dart';
@@ -433,50 +434,29 @@ class _ProfilePageState extends State<ProfilePage>
         child: Row(
           children: [
             GestureDetector(
-              onTap: () {
-                // Show avatar customizer dialog
-                showDialog(
+              onTap: () async {
+                // Show avatar customiser dialog
+                final selectedAvatar = await showDialog<Avatar>(
                   context: context,
+                  barrierDismissible: false,
                   builder: (context) => Dialog(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Customize Your Avatar',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxHeight: 600),
-                              child: SingleChildScrollView(
-                                child: AvatarCustomizer(
-                                  initialAvatar: dataProvider.avatar,
-                                  onAvatarSelected: (avatar) {
-                                    dataProvider.setAvatar(avatar);
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Done'),
-                              ),
-                            ),
-                          ],
-                        ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.8,
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      child: AvatarCustomizer(
+                        initialAvatar: dataProvider.avatar,
+                        onAvatarSelected: (avatar) {},
                       ),
                     ),
                   ),
                 );
+                
+                if (selectedAvatar != null) {
+                  await dataProvider.setAvatar(selectedAvatar);
+                }
               },
               child: Container(
                 width: 80,

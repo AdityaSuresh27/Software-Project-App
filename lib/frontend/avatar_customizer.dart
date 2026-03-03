@@ -1,17 +1,17 @@
-/// AvatarCustomizer - Interactive Avatar Customization Interface
+/// AvatarCustomizer - Interactive Avatar Customisation Interface
 /// 
-/// Provides a clean, intuitive interface for users to customize their avatar with
-/// options for body style, colors, features, and accessories.
+/// Provides a clean, intuitive interface for users to customise their avatar with
+/// options for body style, colours, features, and accessories.
 /// 
 /// Features:
 /// - Real-time preview of avatar
 /// - Body style selection
-/// - Color picker for body colors
-/// - Eyes and mouth style customization
+/// - Colour picker for body colours
+/// - Eyes and mouth style customisation
 /// - Glasses and bowtie accessories
-/// - Randomize button for quick avatar generation
+/// - Randomise button for quick avatar generation
 /// 
-/// Returns the customized Avatar object when confirmed.
+/// Returns the customised Avatar object when confirmed.
 
 import 'package:flutter/material.dart';
 import '../backend/models.dart';
@@ -49,8 +49,8 @@ class _AvatarCustomizerState extends State<AvatarCustomizer> {
     return Color(int.parse(hexString, radix: 16));
   }
 
-  void _showColorPicker(String colorType) {
-    final colors = colorType == 'eyes'
+  void _showColourPicker(String colourType) {
+    final colours = colourType == 'eyes'
         ? const [
             '#000000', '#3366FF', '#FF0000', '#00AA00',
             '#FFB6C1', '#4B0082', '#FF69B4', '#00CED1',
@@ -65,7 +65,7 @@ class _AvatarCustomizerState extends State<AvatarCustomizer> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Select ${colorType == 'body' ? 'Body' : colorType == 'accent' ? 'Accent' : colorType == 'eyes' ? 'Eyes' : 'Mouth'} Color'),
+        title: Text('Select ${colourType == 'body' ? 'Body' : colourType == 'accent' ? 'Accent' : colourType == 'eyes' ? 'Eyes' : 'Mouth'} Colour'),
         content: SizedBox(
           width: 300,
           child: GridView.builder(
@@ -75,26 +75,25 @@ class _AvatarCustomizerState extends State<AvatarCustomizer> {
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
             ),
-            itemCount: colors.length,
+            itemCount: colours.length,
             itemBuilder: (context, index) {
-              final color = colors[index];
+              final colour = colours[index];
               return GestureDetector(
                 onTap: () {
                   setState(() {
-                    if (colorType == 'body') {
-                      _currentAvatar = _currentAvatar.copyWith(bodyColor: color);
-                    } else if (colorType == 'accent') {
-                      _currentAvatar = _currentAvatar.copyWith(accentColor: color);
-                    } else if (colorType == 'eyes') {
-                      _currentAvatar = _currentAvatar.copyWith(eyesColor: color);
+                    if (colourType == 'body') {
+                      _currentAvatar = _currentAvatar.copyWith(bodyColor: colour);
+                    } else if (colourType == 'accent') {
+                      _currentAvatar = _currentAvatar.copyWith(accentColor: colour);
+                    } else if (colourType == 'eyes') {
+                      _currentAvatar = _currentAvatar.copyWith(eyesColor: colour);
                     }
-                    widget.onAvatarSelected(_currentAvatar);
                   });
                   Navigator.pop(context);
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: _hexToColor(color),
+                    color: _hexToColor(colour),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: Colors.black26,
@@ -116,130 +115,153 @@ class _AvatarCustomizerState extends State<AvatarCustomizer> {
     );
   }
 
-  void _randomizeAvatar() {
+  void _randomiseAvatar() {
     setState(() {
       _currentAvatar = Avatar.random();
-      widget.onAvatarSelected(_currentAvatar);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Preview section
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Avatar Preview',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 16),
-                AnimatedAvatar(
-                  avatar: _currentAvatar,
-                  size: 140,
-                  autoAnimate: true,
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                    ),
-                    onPressed: _randomizeAvatar,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.shuffle, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Randomize Avatar',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                // Preview section
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                      width: 1,
                     ),
                   ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Avatar Preview',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      AnimatedAvatar(
+                        avatar: _currentAvatar,
+                        size: 140,
+                        autoAnimate: true,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          ),
+                          onPressed: _randomiseAvatar,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.shuffle, size: 20),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Randomise Avatar',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 24),
+
+                // Customisation options
+                _buildCustomisationSection(
+                  'Body Style',
+                  ['circle', 'square', 'rounded'],
+                  _currentAvatar.bodyStyle,
+                  (value) {
+                    setState(() {
+                      _currentAvatar = _currentAvatar.copyWith(bodyStyle: value);
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                _buildColourSection('Body Colour', 'body', _currentAvatar.bodyColor),
+                const SizedBox(height: 16),
+
+                _buildCustomisationSection(
+                  'Eyes',
+                  ['round', 'square', 'x_eyes'],
+                  _currentAvatar.eyesStyle,
+                  (value) {
+                    setState(() {
+                      _currentAvatar = _currentAvatar.copyWith(eyesStyle: value);
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                _buildColourSection('Eyes Colour', 'eyes', _currentAvatar.eyesColor),
+                const SizedBox(height: 16),
+
+                _buildCustomisationSection(
+                  'Mouth',
+                  ['smile', 'neutral', 'surprised', 'box'],
+                  _currentAvatar.mouthStyle,
+                  (value) {
+                    setState(() {
+                      _currentAvatar = _currentAvatar.copyWith(mouthStyle: value);
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                _buildColourSection('Mouth Colour', 'accent', _currentAvatar.accentColor),
+                const SizedBox(height: 16),
+
+                // Accessories
+                _buildAccessoriesSection(),
+                const SizedBox(height: 24),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Customization options
-          _buildCustomizationSection(
-            'Body Style',
-            ['circle', 'square', 'rounded'],
-            _currentAvatar.bodyStyle,
-            (value) {
-              setState(() {
-                _currentAvatar = _currentAvatar.copyWith(bodyStyle: value);                widget.onAvatarSelected(_currentAvatar);                widget.onAvatarSelected(_currentAvatar);
-              });
-            },
+        ),
+        // Finish button at the bottom
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () {
+                Navigator.pop(context, _currentAvatar);
+              },
+              child: const Text(
+                'Finish',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
-
-          _buildColorSection('Body Color', 'body', _currentAvatar.bodyColor),
-          const SizedBox(height: 16),
-
-          _buildCustomizationSection(
-            'Eyes',
-            ['round', 'square', 'x_eyes'],
-            _currentAvatar.eyesStyle,
-            (value) {
-              setState(() {
-                _currentAvatar = _currentAvatar.copyWith(eyesStyle: value);
-                widget.onAvatarSelected(_currentAvatar);
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-
-          _buildColorSection('Eyes Color', 'eyes', _currentAvatar.eyesColor),
-          const SizedBox(height: 16),
-
-          _buildCustomizationSection(
-            'Mouth',
-            ['smile', 'neutral', 'surprised', 'box'],
-            _currentAvatar.mouthStyle,
-            (value) {
-              setState(() {
-                _currentAvatar = _currentAvatar.copyWith(mouthStyle: value);
-                widget.onAvatarSelected(_currentAvatar);
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-
-          _buildColorSection('Mouth Color', 'accent', _currentAvatar.accentColor),
-          const SizedBox(height: 16),
-
-          // Accessories
-          _buildAccessoriesSection(),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildCustomizationSection(
+  Widget _buildCustomisationSection(
     String title,
     List<String> options,
     String currentValue,
@@ -283,7 +305,7 @@ class _AvatarCustomizerState extends State<AvatarCustomizer> {
     );
   }
 
-  Widget _buildColorSection(String title, String colorType, String hexColor) {
+  Widget _buildColourSection(String title, String colourType, String hexColour) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -296,11 +318,11 @@ class _AvatarCustomizerState extends State<AvatarCustomizer> {
         ),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: () => _showColorPicker(colorType),
+          onTap: () => _showColourPicker(colourType),
           child: Container(
             height: 56,
             decoration: BoxDecoration(
-              color: _hexToColor(hexColor),
+              color: _hexToColor(hexColour),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: Theme.of(context).colorScheme.outlineVariant,
@@ -308,9 +330,9 @@ class _AvatarCustomizerState extends State<AvatarCustomizer> {
             ),
             child: Center(
               child: Text(
-                'Tap to Change Color',
+                'Tap to Change Colour',
                 style: TextStyle(
-                  color: _hexToColor(hexColor).computeLuminance() > 0.5
+                  color: _hexToColor(hexColour).computeLuminance() > 0.5
                       ? Colors.black
                       : Colors.white,
                   fontWeight: FontWeight.w600,
