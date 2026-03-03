@@ -387,11 +387,11 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
                                 // Logo container
                                 Container(
-                                  width: 280,
-                                  height: 280,
+                                  width: 198,
+                                  height: 198,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(40),
+                                    shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withValues(alpha: 0.25),
@@ -405,10 +405,9 @@ class _SplashScreenState extends State<SplashScreen>
                                       ),
                                     ],
                                   ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(40),
+                                  child: ClipOval(
                                     child: Transform.scale(
-                                      scale: 1,
+                                      scale: 1.52,
                                       child: Image.asset(
                                         'lib/assets/selogo.png',
                                         fit: BoxFit.contain,
