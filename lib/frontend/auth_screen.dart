@@ -6,12 +6,14 @@
 /// - Email/password login form
 /// - "Forgot Password" link for password recovery
 /// - Sign up redirect for new users
-/// - Avatar customization during sign-up
 /// - Multi-factor authentication (MFA) option
+/// - OTP verification on sign-up
+/// - Avatar customization on successful sign-up (after OTP verification)
 /// - Persistent session tracking (saved in SharedPreferences)
 /// - Form validation
 /// 
-/// On successful login, redirects to MainNavigation.
+/// On successful sign-up: OTP verification → Avatar customization → MainNavigation.
+/// On successful login: (MFA if enabled) → MainNavigation.
 /// On failed login, displays error message with retry option.
 
 import 'package:flutter/material.dart';
@@ -41,7 +43,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   
   bool _obscurePassword = true;
   bool _isLoading = false;
-  late Avatar _selectedAvatar;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -50,7 +51,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _selectedAvatar = Avatar(); // Initialize with default avatar
     
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -94,82 +94,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // If signing up, show avatar customizer
-      if (!_isLogin) {
-        if (!mounted) return;
-        final result = await showDialog<Avatar>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Dialog(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Customize Your Avatar',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 600),
-                      child: SingleChildScrollView(
-                        child: AvatarCustomizer(
-                          initialAvatar: _selectedAvatar,
-                          onAvatarSelected: (avatar) {
-                            _selectedAvatar = avatar;
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Back'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: () => Navigator.pop(context, _selectedAvatar),
-                            child: const Text('Confirm'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-        
-        // If user dismissed the dialog (pressed back), don't proceed
-        if (result == null) {
-          return;
-        }
-        // Store the customized avatar
-        _selectedAvatar = result;
-      }
-
       setState(() => _isLoading = true);
 
       await Future.delayed(const Duration(milliseconds: 800));
 
       if (mounted) {
         final dataProvider = Provider.of<DataProvider>(context, listen: false);
-        
-        // Save avatar if signing up
-        if (!_isLogin) {
-          await dataProvider.setAvatar(_selectedAvatar);
-        }
         
         await dataProvider.signIn();
 
@@ -202,6 +132,59 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 transitionDuration: const Duration(milliseconds: 400),
               ),
             );
+          }
+        } else if (!_isLogin) {
+          // For sign up, always show OTP screen
+          setState(() => _isLoading = false);
+          final verified = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(
+              builder: (_) => const OtpScreen(),
+            ),
+          );
+          if (verified == true && mounted) {
+            // After OTP verification on sign-up, show avatar customizer
+            final selectedAvatar = await showDialog<Avatar>(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: AvatarCustomizer(
+                  initialAvatar: Avatar(),
+                  onAvatarSelected: (avatar) {
+                    Navigator.pop(context, avatar);
+                  },
+                ),
+              ),
+            );
+            
+            if (selectedAvatar != null && mounted) {
+              // Save the selected avatar
+              await dataProvider.setAvatar(selectedAvatar);
+              
+              // Navigate to home
+              Navigator.of(context).pushReplacement(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const MainNavigation(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                          CurvedAnimation(
+                              parent: animation, curve: Curves.easeOutCubic),
+                        ),
+                        child: child,
+                      ),
+                    );
+                  },
+                  transitionDuration: const Duration(milliseconds: 400),
+                ),
+              );
+            }
           }
         } else {
           Navigator.of(context).pushReplacement(
