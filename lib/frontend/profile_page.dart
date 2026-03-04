@@ -179,6 +179,10 @@ class _ProfilePageState extends State<ProfilePage>
                       onSelected: (String value) {
                         fontProvider.setFontFamily(value);
                       },
+                      iconColor: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+                      backgroundColor: Theme.of(context).brightness == Brightness.light
+                          ? Colors.grey[200]!
+                          : const Color(0x26ffffff),
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                         const PopupMenuItem<String>(
                           value: 'minimalistic',
