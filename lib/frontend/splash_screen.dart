@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'welcome_screen.dart';
+import 'space_background.dart';
 import 'main_navigation.dart';
 import '../backend/data_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -276,7 +277,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final primary = Theme.of(context).colorScheme.primary;
 
     return AnimatedBuilder(
       animation: _exitOpacity,
@@ -287,22 +287,11 @@ class _SplashScreenState extends State<SplashScreen>
         );
       },
       child: Scaffold(
-        backgroundColor: primary,
+        backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            // Background gradient layers
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    primary,
-                    Color.lerp(primary, Colors.black, 0.3)!,
-                  ],
-                ),
-              ),
-            ),
+            // Space background with shooting stars and twinkling
+            const SpaceBackground(scrollOffset: 0),
 
             // Floating orbs background
             _buildFloatingOrb(

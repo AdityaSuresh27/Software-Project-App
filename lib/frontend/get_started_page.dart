@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'space_background.dart';
 import 'auth_screen.dart';
+import 'welcome_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class GetStartedPage extends StatefulWidget {
@@ -16,6 +17,7 @@ class _GetStartedPageState extends State<GetStartedPage>
   late AnimationController _enterCtrl;
   late Animation<double> _eyebrowAnim, _titleAnim, _dividerAnim,
       _card1Anim, _card2Anim, _footerAnim;
+  final ScrollController _scrollCtrl = ScrollController();
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _GetStartedPageState extends State<GetStartedPage>
   @override
   void dispose() {
     _enterCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -50,6 +53,18 @@ class _GetStartedPageState extends State<GetStartedPage>
     ));
   }
 
+  void _goBack() {
+    Navigator.of(context).pushReplacement(PageRouteBuilder(
+      pageBuilder: (_, a, __) => const WelcomeScreen(),
+      transitionsBuilder: (_, a, __, child) => SlideTransition(
+        position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
+            .animate(CurvedAnimation(parent: a, curve: Curves.easeInOutCubic)),
+        child: child,
+      ),
+      transitionDuration: const Duration(milliseconds: 680),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
@@ -57,8 +72,13 @@ class _GetStartedPageState extends State<GetStartedPage>
     return Scaffold(
       body: Stack(
         children: [
-          // ── Shared galaxy background (no scroll parallax here) ────────────
-          const SpaceBackground(scrollOffset: 0),
+          // ── Shared galaxy background with parallax scroll ────────────────
+          AnimatedBuilder(
+            animation: _scrollCtrl,
+            builder: (_, __) => SpaceBackground(
+              scrollOffset: _scrollCtrl.hasClients ? _scrollCtrl.offset : 0,
+            ),
+          ),
 
           // ── Back arrow ───────────────────────────────────────────────────
           SafeArea(
@@ -67,24 +87,29 @@ class _GetStartedPageState extends State<GetStartedPage>
               child: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded),
                 color: Colors.white.withValues(alpha: 0.55),
-                onPressed: () => Navigator.of(context).maybePop(),
+                onPressed: _goBack,
               ),
             ),
           ),
 
-          // ── Centered content ─────────────────────────────────────────────
+          // ── Scrollable content ───────────────────────────────────────────
           SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(26, mq.size.height * 0.11, 26, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+            child: SingleChildScrollView(
+              controller: _scrollCtrl,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: mq.size.height),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                   // Eyebrow
                   _fade(_eyebrowAnim, _lift(_eyebrowAnim,
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
                           border: Border.all(
                               color: const Color(0xFF00D9FF).withValues(alpha: 0.35)),
@@ -92,10 +117,11 @@ class _GetStartedPageState extends State<GetStartedPage>
                           color: const Color(0xFF00D9FF).withValues(alpha: 0.07),
                         ),
                         child: Text('GET STARTED',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.dmSans(
-                            fontSize: 10.5, letterSpacing: 2.6,
+                            fontSize: 11, letterSpacing: 2.8,
                             color: const Color(0xFF00D9FF).withValues(alpha: 0.85),
-                            fontWeight: FontWeight.w600)),
+                            fontWeight: FontWeight.w700)),
                       ),
                     ),
                   )),
@@ -108,17 +134,17 @@ class _GetStartedPageState extends State<GetStartedPage>
                         Text('Ready to Organize?',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.spaceGrotesk(
-                            fontSize: 38, fontWeight: FontWeight.w800,
-                            color: Colors.white, height: 1.1, letterSpacing: 0.3)),
-                        const SizedBox(height: 13),
-                        Text(
-                          'Choose how you want to get started.\nYour academic command center awaits.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.dmSans(
-                            fontSize: 15, color: Colors.white.withValues(alpha: 0.58),
-                            height: 1.65, fontWeight: FontWeight.w400)),
-                      ],
-                    ),
+                              fontSize: 42, fontWeight: FontWeight.w900,
+                              color: Colors.white, height: 1.15, letterSpacing: 0.4)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Choose how you want to get started.\nYour academic command center awaits.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 16, color: Colors.white.withValues(alpha: 0.62),
+                              height: 1.7, fontWeight: FontWeight.w400, letterSpacing: 0.15)),
+                        ],
+                      ),
                   )),
                   const SizedBox(height: 44),
 
@@ -241,6 +267,8 @@ class _GetStartedPageState extends State<GetStartedPage>
                     ),
                   ),
                 ],
+                  ),
+                ),
               ),
             ),
           ),

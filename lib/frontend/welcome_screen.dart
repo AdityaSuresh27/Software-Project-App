@@ -90,7 +90,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   void _navigateForward() {
-    Navigator.of(context).pushReplacement(PageRouteBuilder(
+    Navigator.of(context).push(PageRouteBuilder(
       pageBuilder: (_, a, __) => const GetStartedPage(),
       transitionsBuilder: (_, a, __, child) => SlideTransition(
         position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
@@ -227,7 +227,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             builder: (_, __) => Opacity(
               opacity: _titleFade.value,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   border: Border.all(color: const Color(0xFF00D9FF).withValues(alpha: 0.35)),
                   borderRadius: BorderRadius.circular(20),
@@ -235,19 +235,19 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ),
                 child: Text('ACADEMIC PLANNER',
                   style: GoogleFonts.dmSans(
-                    fontSize: 10.5, letterSpacing: 2.6,
+                    fontSize: 11, letterSpacing: 2.8,
                     color: const Color(0xFF00D9FF).withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w600)),
+                    fontWeight: FontWeight.w700)),
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           // ClassFlow — guaranteed single line
           AnimatedBuilder(
             animation: _titleFade,
             builder: (_, __) => Transform.translate(
-              offset: Offset(0, -28 * (1 - _titleFade.value)),
+              offset: Offset(0, -32 * (1 - _titleFade.value)),
               child: Opacity(
                 opacity: _titleFade.value,
                 child: ShaderMask(
@@ -261,10 +261,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     alignment: Alignment.centerLeft,
                     child: Text('ClassFlow',
                       style: GoogleFonts.spaceGrotesk(
-                        fontSize: 74,
+                        fontSize: 84,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
-                        letterSpacing: 1.0,
+                        letterSpacing: 1.2,
                         height: 1.0,
                       )),
                   ),
@@ -272,7 +272,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
           // Thin accent underline
           AnimatedBuilder(
@@ -280,8 +280,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             builder: (_, __) => Opacity(
               opacity: _titleFade.value,
               child: Container(
-                width: 48,
-                height: 3,
+                width: 56,
+                height: 3.5,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
                   gradient: const LinearGradient(
@@ -291,7 +291,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ),
             ),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 32),
 
           // Typewriter subtitle — starts when subtitleFade is non-zero
           AnimatedBuilder(
@@ -304,11 +304,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       text: 'Your academic journey,\nbeautifully organized.',
                       duration: const Duration(milliseconds: 3600),
                       style: GoogleFonts.dmSans(
-                        fontSize: 17,
+                        fontSize: 19,
                         color: Colors.white.withValues(alpha: 0.80),
-                        height: 1.65,
+                        height: 1.7,
                         fontWeight: FontWeight.w400,
-                        letterSpacing: 0.2,
+                        letterSpacing: 0.25,
                       ),
                     )
                   : const SizedBox.shrink(),
@@ -324,13 +324,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               child: Row(
                 children: [
                   Icon(Icons.keyboard_arrow_down_rounded,
-                    color: const Color(0xFF00D9FF).withValues(alpha: 0.7), size: 15),
-                  const SizedBox(width: 6),
+                    color: const Color(0xFF00D9FF).withValues(alpha: 0.7), size: 16),
+                  const SizedBox(width: 8),
                   Text('Scroll to explore features',
                     style: GoogleFonts.dmSans(
-                      fontSize: 11.5,
+                      fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.45),
-                      letterSpacing: 0.3)),
+                      letterSpacing: 0.35)),
                 ],
               ),
             ),
@@ -346,19 +346,19 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     padding: const EdgeInsets.fromLTRB(28, 0, 28, 20),
     child: Row(
       children: [
-        Container(width: 18, height: 1.5,
+        Container(width: 20, height: 1.8,
           decoration: BoxDecoration(
             gradient: LinearGradient(colors: [
               const Color(0xFF00D9FF).withValues(alpha: 0),
               const Color(0xFF00D9FF).withValues(alpha: 0.5)
             ]),
           )),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Text(label,
           style: GoogleFonts.dmSans(
-            fontSize: 10, letterSpacing: 3.2,
-            color: const Color(0xFF00D9FF).withValues(alpha: 0.55),
-            fontWeight: FontWeight.w600)),
+            fontSize: 10.5, letterSpacing: 3.4,
+            color: const Color(0xFF00D9FF).withValues(alpha: 0.6),
+            fontWeight: FontWeight.w700)),
       ],
     ),
   );
@@ -429,13 +429,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           children: [
                             Text(f.title,
                               style: GoogleFonts.spaceGrotesk(
-                                fontSize: 16, fontWeight: FontWeight.w700,
-                                color: Colors.white, letterSpacing: 0.15)),
-                            const SizedBox(height: 7),
+                                fontSize: 17, fontWeight: FontWeight.w800,
+                                color: Colors.white, letterSpacing: 0.2)),
+                            const SizedBox(height: 8),
                             Text(f.description,
                               style: GoogleFonts.dmSans(
-                                fontSize: 13, color: Colors.white.withValues(alpha: 0.60),
-                                height: 1.55, fontWeight: FontWeight.w400)),
+                                fontSize: 13.5, color: Colors.white.withValues(alpha: 0.62),
+                                height: 1.6, fontWeight: FontWeight.w400, letterSpacing: 0.1)),
                           ],
                         ),
                       ),
@@ -475,7 +475,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           GestureDetector(
             onTap: _navigateForward,
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 22),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF00D9FF), Color(0xFF06D6D6)],
@@ -492,17 +492,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 textAlign: TextAlign.center,
                 style: GoogleFonts.spaceGrotesk(
                   color: const Color(0xFF040D18),
-                  fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Rope hint
           Text('or pull the rope on the right →',
             textAlign: TextAlign.center,
             style: GoogleFonts.dmSans(
-              color: Colors.white.withValues(alpha: 0.32),
-              fontSize: 11.5, letterSpacing: 0.3)),
+              color: Colors.white.withValues(alpha: 0.35),
+              fontSize: 12, letterSpacing: 0.4, fontWeight: FontWeight.w500)),
         ],
       ),
     );
