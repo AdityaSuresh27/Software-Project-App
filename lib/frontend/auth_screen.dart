@@ -27,14 +27,16 @@ import 'otp_screen.dart';
 import 'avatar_customizer.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final bool isSignUp;
+
+  const AuthScreen({super.key, this.isSignUp = false});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
-  bool _isLogin = true;
+  late bool _isLogin;
   final _formKey = GlobalKey<FormState>();
   
   final _nameController = TextEditingController();
@@ -51,6 +53,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    
+    // Initialize login mode based on widget parameter
+    _isLogin = !widget.isSignUp;
     
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),

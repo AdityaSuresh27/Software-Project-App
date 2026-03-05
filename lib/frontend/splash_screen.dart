@@ -17,7 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'onboarding_screen.dart';
+import 'welcome_screen.dart';
 import 'main_navigation.dart';
 import '../backend/data_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -247,7 +247,7 @@ class _SplashScreenState extends State<SplashScreen>
     } else {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (_, animation, __) => const OnboardingScreen(),
+          pageBuilder: (_, animation, __) => const WelcomeScreen(),
           transitionsBuilder: (_, animation, __, child) =>
               FadeTransition(opacity: animation, child: child),
           transitionDuration: const Duration(milliseconds: 500),
