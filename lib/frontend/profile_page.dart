@@ -172,6 +172,35 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                   const Divider(),
                   ListTile(
+                    leading: const Icon(Icons.palette_outlined),
+                    title: const Text('Background Theme'),
+                    subtitle: Text(
+                      themeProvider.backgroundTheme == 'space'
+                          ? 'Space Theme'
+                          : 'Minimalistic',
+                    ),
+                    trailing: AppPopupMenuButton<String>(
+                      onSelected: (String value) {
+                        themeProvider.setBackgroundTheme(value);
+                      },
+                      iconColor: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+                      backgroundColor: Theme.of(context).brightness == Brightness.light
+                          ? Colors.grey[200]!
+                          : const Color(0x26ffffff),
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'minimalistic',
+                          child: Text('Minimalistic'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'space',
+                          child: Text('Space Theme'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+                  ListTile(
                     leading: const Icon(Icons.text_fields_rounded),
                     title: const Text('Font Style'),
                     subtitle: Text(fontProvider.fontDisplayName),

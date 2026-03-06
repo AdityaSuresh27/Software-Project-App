@@ -81,18 +81,6 @@ class _GetStartedPageState extends State<GetStartedPage>
             ),
           ),
 
-          // ── Back arrow ───────────────────────────────────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8, top: 4),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                color: Colors.white.withValues(alpha: 0.55),
-                onPressed: _goBack,
-              ),
-            ),
-          ),
-
           // ── Scrollable content ───────────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
@@ -106,6 +94,7 @@ class _GetStartedPageState extends State<GetStartedPage>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                  const SizedBox(height: 48), // space for back button
                   // Eyebrow
                   _fade(_eyebrowAnim, _lift(_eyebrowAnim,
                     child: Center(
@@ -323,6 +312,18 @@ class _GetStartedPageState extends State<GetStartedPage>
                 ],
                   ),
                 ),
+              ),
+            ),
+          ),
+
+          // ── Back arrow (on top of scroll so taps register) ─────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                color: Colors.white.withValues(alpha: 0.55),
+                onPressed: _goBack,
               ),
             ),
           ),

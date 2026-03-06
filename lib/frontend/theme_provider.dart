@@ -18,8 +18,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light; // Changed default to light
+  String _backgroundTheme = 'minimalistic'; // 'minimalistic' | 'space'
 
   ThemeMode get themeMode => _themeMode;
+  String get backgroundTheme => _backgroundTheme;
+  bool get isSpaceTheme => _backgroundTheme == 'space';
   bool get isDarkMode => _themeMode == ThemeMode.dark;
   bool get isLightMode => _themeMode == ThemeMode.light;
   bool get isSystemMode => _themeMode == ThemeMode.system;
@@ -31,6 +34,7 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> _loadThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final themeModeString = prefs.getString('themeMode') ?? 'light'; // Changed default
+    _backgroundTheme = prefs.getString('backgroundTheme') ?? 'minimalistic';
     
     switch (themeModeString) {
       case 'light':
@@ -44,6 +48,13 @@ class ThemeProvider extends ChangeNotifier {
     }
     
     notifyListeners();
+  }
+
+  Future<void> setBackgroundTheme(String theme) async {
+    _backgroundTheme = theme;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('backgroundTheme', theme);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

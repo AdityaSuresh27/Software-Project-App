@@ -14,11 +14,14 @@
 /// state for each screen. Features smooth fade and slide transitions between pages.
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'home_page.dart';
 import 'calendar_page.dart';
 import 'timeline_page.dart';
 import 'events_page.dart';
 import 'profile_page.dart';
+import 'space_background.dart';
+import 'theme_provider.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -34,6 +37,7 @@ class _MainNavigationState extends State<MainNavigation>
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  double _scrollOffset = 0;
 
   final List<Widget> _pages = const [
     HomePage(),
@@ -95,8 +99,16 @@ class _MainNavigationState extends State<MainNavigation>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FadeTransition(
+    final isSpaceTheme = Provider.of<ThemeProvider>(context).isSpaceTheme;
+
+    Widget pageContent = NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (isSpaceTheme && notification is ScrollUpdateNotification) {
+          setState(() => _scrollOffset = notification.metrics.pixels);
+        }
+        return false; // don't absorb — let pages handle scrolling normally
+      },
+      child: FadeTransition(
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
@@ -106,6 +118,18 @@ class _MainNavigationState extends State<MainNavigation>
           ),
         ),
       ),
+    );
+
+    return Scaffold(
+      backgroundColor: isSpaceTheme ? Colors.transparent : null,
+      body: isSpaceTheme
+          ? Stack(
+              children: [
+                SpaceBackground(scrollOffset: _scrollOffset),
+                pageContent,
+              ],
+            )
+          : pageContent,
       bottomNavigationBar: AnimatedBuilder(
         animation: Listenable.merge([
           _fadeController,

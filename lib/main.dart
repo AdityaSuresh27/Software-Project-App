@@ -77,6 +77,18 @@ class ClassFlowApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<ThemeProvider, FontProvider>(
       builder: (context, themeProvider, fontProvider, child) {
+        // If space theme is active, use space theme regardless of font choice
+        if (themeProvider.isSpaceTheme) {
+          return MaterialApp(
+            title: 'ClassFlow',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.spaceTheme,
+            themeMode: ThemeMode.light, // always use the single space theme
+            home: const SplashScreen(),
+            navigatorKey: navigatorKey,
+          );
+        }
+
         // Select theme based on font choice
         late ThemeData lightTheme;
         late ThemeData darkTheme;

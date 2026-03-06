@@ -596,6 +596,150 @@ class AppTheme {
     ),
   );
 
+  /// SPACE THEME — deep space background with translucent cards and cyan accents.
+  /// Scaffold is transparent so SpaceBackground sits behind all content.
+  static ThemeData spaceTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: Colors.transparent,
+    primaryColor: const Color(0xFF00D9FF),
+    colorScheme: const ColorScheme.dark(
+      primary: Color(0xFF00D9FF),
+      secondary: Color(0xFF06D6D6),
+      tertiary: Color(0xFF8B5CF6),
+      surface: Color(0x1A00D9FF),
+      surfaceContainerHighest: Color(0x2600D9FF),
+      onPrimary: Color(0xFF040D18),
+      onSecondary: Color(0xFF040D18),
+      onSurface: Colors.white,
+      error: Color(0xFFFF6B6B),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      color: const Color(0x1A00D9FF),
+      surfaceTintColor: Colors.transparent,
+    ),
+    appBarTheme: const AppBarTheme(
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: Colors.transparent,
+      foregroundColor: Colors.white,
+      centerTitle: false,
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xCC040D18),
+      elevation: 8,
+      selectedItemColor: Color(0xFF00D9FF),
+      unselectedItemColor: Color(0x80FFFFFF),
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xEE071828),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Color(0x4000D9FF), width: 1),
+      ),
+      titleTextStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+      ),
+      contentTextStyle: TextStyle(
+        color: Color(0xD9FFFFFF),
+        fontSize: 15,
+        height: 1.5,
+      ),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0x3300D9FF),
+      thickness: 1,
+      space: 1,
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: const Color(0x1A00D9FF),
+      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: Color(0x4000D9FF)),
+      ),
+    ),
+    textTheme: TextTheme(
+      displayLarge: GoogleFonts.spaceGrotesk(fontSize: 38, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.5),
+      displayMedium: GoogleFonts.spaceGrotesk(fontSize: 34, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.4),
+      titleLarge: GoogleFonts.spaceGrotesk(fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
+      titleMedium: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
+      titleSmall: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xCCFFFFFF)),
+      bodyLarge: GoogleFonts.dmSans(fontSize: 18, fontWeight: FontWeight.w400, color: Colors.white, height: 1.6),
+      bodyMedium: GoogleFonts.dmSans(fontSize: 16, fontWeight: FontWeight.w400, color: Color(0xCCFFFFFF), height: 1.6),
+      bodySmall: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w400, color: Color(0x99FFFFFF), height: 1.5),
+      labelLarge: GoogleFonts.dmSans(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+      labelMedium: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xCCFFFFFF)),
+      labelSmall: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0x99FFFFFF)),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0x1200D9FF),
+      labelStyle: const TextStyle(color: Color(0xB3FFFFFF)),
+      hintStyle: const TextStyle(color: Color(0x59FFFFFF)),
+      prefixIconColor: const Color(0xFF00D9FF),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0x4D00D9FF), width: 1.8),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0x4D00D9FF), width: 1.8),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFF00D9FF), width: 2.2),
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF00D9FF),
+        foregroundColor: const Color(0xFF040D18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: const Color(0xFF00D9FF)),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF00D9FF),
+        foregroundColor: const Color(0xFF040D18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) =>
+          states.contains(WidgetState.selected) ? const Color(0xFF00D9FF) : Colors.white),
+      trackColor: WidgetStateProperty.resolveWith((states) =>
+          states.contains(WidgetState.selected)
+              ? const Color(0x6600D9FF)
+              : const Color(0x40FFFFFF)),
+    ),
+    listTileTheme: const ListTileThemeData(
+      iconColor: Color(0xFF00D9FF),
+      tileColor: Colors.transparent,
+      textColor: Colors.white,
+    ),
+    popupMenuTheme: const PopupMenuThemeData(
+      color: Color(0xF0071828),
+      textStyle: TextStyle(color: Colors.white),
+    ),
+  );
+
   static Color getClassificationColor(String classification) {
     switch (classification.toLowerCase()) {
       case 'class':

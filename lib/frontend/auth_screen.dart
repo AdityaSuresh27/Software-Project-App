@@ -91,6 +91,28 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     Navigator.of(context).pop();
   }
 
+  void _goHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MainNavigation(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+              child: child,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+      (route) => false,
+    );
+  }
+
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -111,26 +133,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             ),
           );
           if (verified == true && mounted) {
-            Navigator.of(context).pushReplacement(
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const MainNavigation(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                        CurvedAnimation(
-                            parent: animation, curve: Curves.easeOutCubic),
-                      ),
-                      child: child,
-                    ),
-                  );
-                },
-                transitionDuration: const Duration(milliseconds: 400),
-              ),
-            );
+            _goHome();
           }
         } else if (!_isLogin) {
           // For sign up, always show OTP screen
@@ -161,53 +164,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             );
             
             if (selectedAvatar != null && mounted) {
-              // Save the selected avatar
               await dataProvider.setAvatar(selectedAvatar);
-              
-              // Navigate to home
-              Navigator.of(context).pushReplacement(
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) =>
-                      const MainNavigation(),
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                          CurvedAnimation(
-                              parent: animation, curve: Curves.easeOutCubic),
-                        ),
-                        child: child,
-                      ),
-                    );
-                  },
-                  transitionDuration: const Duration(milliseconds: 400),
-                ),
-              );
+              _goHome();
             }
           }
         } else {
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const MainNavigation(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                      CurvedAnimation(
-                          parent: animation, curve: Curves.easeOutCubic),
-                    ),
-                    child: child,
-                  ),
-                );
-              },
-              transitionDuration: const Duration(milliseconds: 400),
-            ),
-          );
+          _goHome();
         }
       }
     }
@@ -225,18 +187,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             animation: _scrollCtrl,
             builder: (_, __) => SpaceBackground(
               scrollOffset: _scrollCtrl.hasClients ? _scrollCtrl.offset : 0,
-            ),
-          ),
-
-          // ── Back button ──────────────────────────────────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8, top: 4),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                color: Colors.white.withValues(alpha: 0.55),
-                onPressed: _goBack,
-              ),
             ),
           ),
 
@@ -484,6 +434,18 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+
+          // ── Back button (on top of scroll so taps register) ─────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                color: Colors.white.withValues(alpha: 0.55),
+                onPressed: _goBack,
               ),
             ),
           ),

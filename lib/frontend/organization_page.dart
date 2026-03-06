@@ -62,18 +62,6 @@ class _OrganizationPageState extends State<OrganizationPage>
             ),
           ),
 
-          // ── Back button ──────────────────────────────────────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8, top: 4),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                color: Colors.white.withValues(alpha: 0.55),
-                onPressed: _goBack,
-              ),
-            ),
-          ),
-
           // ── Scrollable content ───────────────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
@@ -235,6 +223,18 @@ class _OrganizationPageState extends State<OrganizationPage>
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+
+          // ── Back button (on top of scroll so taps register) ─────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                color: Colors.white.withValues(alpha: 0.55),
+                onPressed: _goBack,
               ),
             ),
           ),
