@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'dart:math' as math;
 import 'space_background.dart';
 import 'auth_screen.dart';
 import 'organization_page.dart';
+import 'privacy_policy_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class GetStartedPage extends StatefulWidget {
@@ -66,6 +68,14 @@ class _GetStartedPageState extends State<GetStartedPage>
     Navigator.of(context).pop();
   }
 
+  void _goToPrivacyPolicy() {
+    Navigator.of(context).push(PageRouteBuilder(
+      pageBuilder: (_, a, __) => const PrivacyPolicyPage(),
+      transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
+      transitionDuration: const Duration(milliseconds: 400),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
@@ -121,11 +131,13 @@ class _GetStartedPageState extends State<GetStartedPage>
                   _fade(_titleAnim, _lift(_titleAnim,
                     child: Column(
                       children: [
-                        Text('Ready to Organize?',
-                          textAlign: TextAlign.center,
+                        _Typewriter(
+                          text: 'Ready to Organize?',
                           style: GoogleFonts.spaceGrotesk(
                               fontSize: 42, fontWeight: FontWeight.w900,
-                              color: Colors.white, height: 1.15, letterSpacing: 0.4)),
+                              color: Colors.white, height: 1.15, letterSpacing: 0.4),
+                          duration: const Duration(milliseconds: 1400),
+                        ),
                           const SizedBox(height: 16),
                           Text(
                             'Choose how you want to get started.\nYour academic command center awaits.',
@@ -285,25 +297,14 @@ class _GetStartedPageState extends State<GetStartedPage>
                             fontSize: 11, color: Colors.white.withValues(alpha: 0.35),
                             height: 1.7),
                           children: [
-                            const TextSpan(text: 'By continuing you agree to our '),
-                            TextSpan(
-                              text: 'Terms of Service',
-                              recognizer: TapGestureRecognizer()..onTap = () {},
-                              style: TextStyle(
-                                color: const Color(0xFF00D9FF).withValues(alpha: 0.65),
-                                decoration: TextDecoration.underline,
-                                decorationColor: const Color(0xFF00D9FF).withValues(alpha: 0.40)),
-                            ),
-                            const TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Privacy Policy',
-                              recognizer: TapGestureRecognizer()..onTap = () {},
+                              recognizer: TapGestureRecognizer()..onTap = _goToPrivacyPolicy,
                               style: TextStyle(
                                 color: const Color(0xFF00D9FF).withValues(alpha: 0.65),
                                 decoration: TextDecoration.underline,
                                 decorationColor: const Color(0xFF00D9FF).withValues(alpha: 0.40)),
                             ),
-                            const TextSpan(text: '.'),
                           ],
                         ),
                       ),
@@ -344,4 +345,54 @@ class _GetStartedPageState extends State<GetStartedPage>
       child: child,
     ),
   );
+}
+
+/// Typewriter animation widget - types out text character by character with blinking cursor
+class _Typewriter extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+  final Duration duration;
+  const _Typewriter({required this.text, this.style, required this.duration});
+
+  @override
+  State<_Typewriter> createState() => _TypewriterState();
+}
+
+class _TypewriterState extends State<_Typewriter> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<int> _chars;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: widget.duration)..forward();
+    _chars = IntTween(begin: 0, end: widget.text.length)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.linear));
+  }
+
+  @override
+  void dispose() { 
+    _ctrl.dispose(); 
+    super.dispose(); 
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _chars,
+      builder: (_, __) {
+        final shown = widget.text.substring(0, _chars.value);
+        final typing = _chars.value < widget.text.length;
+        final cursorA = typing ? (0.25 + 0.75 * math.sin(_ctrl.value * 28).abs()) : 0.0;
+        return RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(text: shown, style: widget.style, children: typing
+              ? [TextSpan(text: '▍', style: (widget.style ?? const TextStyle()).copyWith(
+                  color: const Color(0xFF00D9FF).withValues(alpha: cursorA),
+                  fontSize: (widget.style?.fontSize ?? 16) * 0.72))]
+              : []),
+        );
+      },
+    );
+  }
 }
