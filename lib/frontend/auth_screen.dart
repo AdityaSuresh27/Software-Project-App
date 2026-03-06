@@ -246,7 +246,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               controller: _scrollCtrl,
               physics: const AlwaysScrollableScrollPhysics(),
               child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: mq.size.height - 100),
+                constraints: BoxConstraints(minHeight: mq.size.height),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
                   child: Column(

@@ -1,6 +1,7 @@
 /// OtpScreen - One-Time Password Verification
 /// 
 /// Verification screen for multi-factor authentication during sign-up.
+/// Redesigned with parallax scrollable background matching entry page aesthetics.
 /// 
 /// Features:
 /// - 6-digit OTP input with individual digit boxes
@@ -10,12 +11,15 @@
 /// - Auto-clear and auto-advance on digit entry
 /// - Error state indicators
 /// - Loading state during verification
+/// - Parallax space background
+/// - Staggered entrance animations
 /// 
 /// User enters OTP sent via email/SMS to verify account creation.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'space_background.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -24,18 +28,21 @@ class OtpScreen extends StatefulWidget {
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen>
-    with SingleTickerProviderStateMixin {
+class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
   // One controller per digit box — lets us read and clear each field independently.
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final _scrollCtrl = ScrollController();
 
   bool _hasError = false;
   bool _isVerifying = false;
 
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
+  
+  late AnimationController _enterCtrl;
+  late Animation<double> _eyebrowAnim, _titleAnim, _otpAnim, _buttonAnim;
 
   @override
   void initState() {
@@ -46,17 +53,27 @@ class _OtpScreenState extends State<OtpScreen>
       vsync: this,
     );
 
-    // Value runs 0 → 1 and is mapped to a horizontal offset in the builder,
-    // creating a left-right oscillation that signals a failed code entry.
     _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
     );
 
-    // Post-frame so the widget tree is built before we try to focus.
+    _enterCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1600))
+      ..forward();
+
+    _eyebrowAnim = _interval(0.0, 0.25);
+    _titleAnim = _interval(0.15, 0.50);
+    _otpAnim = _interval(0.40, 0.75);
+    _buttonAnim = _interval(0.65, 1.00);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNodes[0].requestFocus();
     });
   }
+
+  Animation<double> _interval(double begin, double end) =>
+      CurvedAnimation(parent: _enterCtrl,
+          curve: Interval(begin, end, curve: Curves.easeOutCubic));
 
   @override
   void dispose() {
@@ -67,6 +84,8 @@ class _OtpScreenState extends State<OtpScreen>
       f.dispose();
     }
     _shakeController.dispose();
+    _enterCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -138,208 +157,300 @@ class _OtpScreenState extends State<OtpScreen>
     }
   }
 
+  void _goBack() {
+    Navigator.pop(context, false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
+    final mq = MediaQuery.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          // Returning false signals to auth_screen that verification was cancelled,
-          // so it does not navigate to MainNavigation.
-          onPressed: () => Navigator.pop(context, false),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Icon(
-                    Icons.verified_user_rounded,
-                    size: 52,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'Two-Factor Authentication',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Enter your 6-digit authentication code to continue.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.color
-                            ?.withValues(alpha: 0.7),
-                        height: 1.5,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
-
-                // Shake the entire row of boxes on a failed attempt.
-                AnimatedBuilder(
-                  animation: _shakeAnimation,
-                  builder: (context, child) {
-                    // Maps the 0→1 animation value to a side-to-side offset.
-                    // The sign flip on each half-cycle creates the oscillation.
-                    final offset = _shakeController.isAnimating
-                        ? 8 *
-                            (0.5 - (_shakeAnimation.value - 0.5).abs()) *
-                            (_shakeAnimation.value < 0.5 ? -1 : 1)
-                        : 0.0;
-                    return Transform.translate(
-                      offset: Offset(offset * 4, 0),
-                      child: child,
-                    );
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: KeyboardListener(
-                          focusNode: FocusNode(),
-                          onKeyEvent: (event) => _onKeyEvent(index, event),
-                          child: SizedBox(
-                            width: 44,
-                            height: 56,
-                            child: TextFormField(
-                              controller: _controllers[index],
-                              focusNode: _focusNodes[index],
-                              keyboardType: TextInputType.number,
-                              textAlign: TextAlign.center,
-                              maxLength: 1,
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: _hasError ? AppTheme.errorRed : null,
-                              ),
-                              inputFormatters: [
-                                // Blocks letters and symbols — only digits allowed.
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              decoration: InputDecoration(
-                                counterText: '',
-                                filled: true,
-                                fillColor: _hasError
-                                    ? AppTheme.errorRed.withValues(alpha: 0.08)
-                                    : color.withValues(alpha: 0.06),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: _hasError
-                                        ? AppTheme.errorRed
-                                        : color.withValues(alpha: 0.3),
-                                    width: 2,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: _hasError
-                                        ? AppTheme.errorRed
-                                        : color.withValues(alpha: 0.3),
-                                    width: 2,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color:
-                                        _hasError ? AppTheme.errorRed : color,
-                                    width: 2.5,
-                                  ),
-                                ),
-                              ),
-                              onChanged: (value) =>
-                                  _onDigitEntered(index, value),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-
-                if (_hasError) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'Invalid code. Please try again.',
-                    style: TextStyle(
-                      color: AppTheme.errorRed,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 40),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _isVerifying ? null : _verify,
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isVerifying
-                        ? SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).colorScheme.onPrimary,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'Verify',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(
-                    'Cancel and go back',
-                    style: TextStyle(color: AppTheme.errorRed),
-                  ),
-                ),
-              ],
+      body: Stack(
+        children: [
+          // ── Parallax space background ────────────────────────────────────
+          AnimatedBuilder(
+            animation: _scrollCtrl,
+            builder: (_, __) => SpaceBackground(
+              scrollOffset: _scrollCtrl.hasClients ? _scrollCtrl.offset : 0,
             ),
           ),
-        ),
+
+          // ── Back button ──────────────────────────────────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                color: Colors.white.withValues(alpha: 0.55),
+                onPressed: _goBack,
+              ),
+            ),
+          ),
+
+          // ── Scrollable content ───────────────────────────────────────────
+          SafeArea(
+            child: SingleChildScrollView(
+              controller: _scrollCtrl,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: mq.size.height),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Eyebrow badge
+                      _fade(_eyebrowAnim, _lift(_eyebrowAnim,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: const Color(0xFF00D9FF).withValues(alpha: 0.35)),
+                              borderRadius: BorderRadius.circular(24),
+                              color: const Color(0xFF00D9FF).withValues(alpha: 0.07),
+                            ),
+                            child: Text('VERIFY ACCOUNT',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11, letterSpacing: 2.8,
+                                color: const Color(0xFF00D9FF).withValues(alpha: 0.85),
+                                fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                      )),
+                      const SizedBox(height: 24),
+
+                      // Title
+                      _fade(_titleAnim, _lift(_titleAnim,
+                        child: Column(
+                          children: [
+                            Text('Confirm Your Identity',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 42, fontWeight: FontWeight.w900,
+                                  color: Colors.white, height: 1.15, letterSpacing: 0.4)),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Enter the 6-digit code sent to your email address to verify this is really you.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 16, color: Colors.white.withValues(alpha: 0.85),
+                                  height: 1.7, fontWeight: FontWeight.w400, letterSpacing: 0.15),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                      const SizedBox(height: 48),
+
+                      // OTP input boxes
+                      _fade(_otpAnim, _lift(_otpAnim,
+                        child: Column(
+                          children: [
+                            // Shake the entire row of boxes on a failed attempt.
+                            AnimatedBuilder(
+                              animation: _shakeAnimation,
+                              builder: (context, child) {
+                                final offset = _shakeController.isAnimating
+                                    ? 8 *
+                                        (0.5 - (_shakeAnimation.value - 0.5).abs()) *
+                                        (_shakeAnimation.value < 0.5 ? -1 : 1)
+                                    : 0.0;
+                                return Transform.translate(
+                                  offset: Offset(offset * 4, 0),
+                                  child: child,
+                                );
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(6, (index) {
+                                  return Expanded(
+                                    child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                    child: KeyboardListener(
+                                      focusNode: FocusNode(),
+                                      onKeyEvent: (event) => _onKeyEvent(index, event),
+                                      child: SizedBox(
+                                        height: 56,
+                                        child: TextFormField(
+                                          controller: _controllers[index],
+                                          focusNode: _focusNodes[index],
+                                          keyboardType: TextInputType.number,
+                                          textAlign: TextAlign.center,
+                                          maxLength: 1,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w800,
+                                            color: _hasError 
+                                                ? const Color(0xFFFF6B6B)
+                                                : Colors.white,
+                                          ),
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter.digitsOnly,
+                                          ],
+                                          decoration: InputDecoration(
+                                            counterText: '',
+                                            filled: true,
+                                            fillColor: _hasError
+                                                ? const Color(0xFFFF6B6B).withValues(alpha: 0.08)
+                                                : Colors.white.withValues(alpha: 0.05),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: BorderSide(
+                                                color: _hasError
+                                                    ? const Color(0xFFFF6B6B)
+                                                    : const Color(0xFF00D9FF).withValues(alpha: 0.25),
+                                                width: 2,
+                                              ),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: BorderSide(
+                                                color: _hasError
+                                                    ? const Color(0xFFFF6B6B)
+                                                    : const Color(0xFF00D9FF).withValues(alpha: 0.25),
+                                                width: 2,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: BorderSide(
+                                                color: _hasError 
+                                                    ? const Color(0xFFFF6B6B)
+                                                    : const Color(0xFF00D9FF),
+                                                width: 2.5,
+                                              ),
+                                            ),
+                                          ),
+                                          onChanged: (value) =>
+                                              _onDigitEntered(index, value),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  );
+                                }),
+                              ),
+                            ),
+
+                            if (_hasError) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                'Invalid code. Please try again.',
+                                style: GoogleFonts.dmSans(
+                                  color: const Color(0xFFFF6B6B),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      )),
+
+                      const SizedBox(height: 48),
+
+                      // Buttons
+                      _fade(_buttonAnim, _lift(_buttonAnim,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Verify button
+                            GestureDetector(
+                              onTap: _isVerifying ? null : _verify,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 18),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF00D9FF), Color(0xFF06D6D6)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: const Color(0xFF00D9FF).withValues(alpha: 0.25),
+                                        blurRadius: 24, offset: const Offset(0, 8)),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: _isVerifying
+                                      ? SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                              const Color(0xFF040D18).withValues(alpha: 0.85),
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          'Verify Code',
+                                          style: GoogleFonts.spaceGrotesk(
+                                            color: const Color(0xFF040D18),
+                                            fontSize: 17, fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.4)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Cancel button
+                            GestureDetector(
+                              onTap: _goBack,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: const Color(0xFF00D9FF).withValues(alpha: 0.38),
+                                      width: 1.2),
+                                  color: const Color(0xFF00D9FF).withValues(alpha: 0.05),
+                                ),
+                                child: Center(
+                                  child: Text('Cancel and Go Back',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      color: Colors.white.withValues(alpha: 0.90),
+                                      fontSize: 15, fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                      )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _fade(Animation<double> anim, Widget child) => AnimatedBuilder(
+    animation: anim,
+    builder: (_, __) => Opacity(opacity: anim.value.clamp(0.0, 1.0), child: child),
+  );
+
+  Widget _lift(Animation<double> anim, {required Widget child}) => AnimatedBuilder(
+    animation: anim,
+    builder: (_, __) => Transform.translate(
+      offset: Offset(0, 28 * (1 - anim.value)),
+      child: child,
+    ),
+  );
 }
