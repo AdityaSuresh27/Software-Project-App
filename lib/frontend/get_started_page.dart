@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'space_background.dart';
 import 'auth_screen.dart';
-import 'welcome_screen.dart';
+import 'organization_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class GetStartedPage extends StatefulWidget {
@@ -16,7 +16,7 @@ class _GetStartedPageState extends State<GetStartedPage>
     with TickerProviderStateMixin {
   late AnimationController _enterCtrl;
   late Animation<double> _eyebrowAnim, _titleAnim, _dividerAnim,
-      _card1Anim, _card2Anim, _footerAnim;
+      _card1Anim, _card2Anim, _orgAnim, _footerAnim;
   final ScrollController _scrollCtrl = ScrollController();
 
   @override
@@ -31,6 +31,7 @@ class _GetStartedPageState extends State<GetStartedPage>
     _dividerAnim = _interval(0.40, 0.62);
     _card1Anim   = _interval(0.50, 0.78);
     _card2Anim   = _interval(0.62, 0.90);
+    _orgAnim     = _interval(0.74, 0.98);
     _footerAnim  = _interval(0.76, 1.00);
   }
 
@@ -53,16 +54,16 @@ class _GetStartedPageState extends State<GetStartedPage>
     ));
   }
 
-  void _goBack() {
-    Navigator.of(context).pushReplacement(PageRouteBuilder(
-      pageBuilder: (_, a, __) => const WelcomeScreen(),
-      transitionsBuilder: (_, a, __, child) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-            .animate(CurvedAnimation(parent: a, curve: Curves.easeInOutCubic)),
-        child: child,
-      ),
-      transitionDuration: const Duration(milliseconds: 680),
+  void _goToOrganization() {
+    Navigator.of(context).push(PageRouteBuilder(
+      pageBuilder: (_, a, __) => const OrganizationPage(),
+      transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
+      transitionDuration: const Duration(milliseconds: 400),
     ));
+  }
+
+  void _goBack() {
+    Navigator.of(context).pop();
   }
 
   @override
@@ -227,6 +228,59 @@ class _GetStartedPageState extends State<GetStartedPage>
                                 letterSpacing: 0.3)),
                           ],
                         ),
+                      ),
+                    ),
+                  )),
+                  const SizedBox(height: 44),
+
+                  // Organization section
+                  _fade(_orgAnim, _lift(_orgAnim,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: const Color(0xFF00D9FF).withValues(alpha: 0.25),
+                            width: 1.2),
+                        color: const Color(0xFF00D9FF).withValues(alpha: 0.03),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Are you an organisation?',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 15, fontWeight: FontWeight.w800,
+                              color: Colors.white, letterSpacing: 0.2)),
+                          const SizedBox(height: 6),
+                          Text('Explore ClassFlow Pro for managing entire institutions with advanced features and dedicated support.',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 12, color: Colors.white.withValues(alpha: 0.60),
+                              height: 1.5, fontWeight: FontWeight.w400)),
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: _goToOrganization,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: const Color(0xFF00D9FF).withValues(alpha: 0.12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Learn More',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      color: const Color(0xFF00D9FF),
+                                      fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.15)),
+                                  const SizedBox(width: 6),
+                                  Icon(Icons.arrow_forward_rounded,
+                                    color: const Color(0xFF00D9FF),
+                                    size: 16),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   )),

@@ -10,7 +10,7 @@
 /// - Define semester start and end dates
 /// - Optional exclude specific dates (holidays, breaks)
 /// - Assign category for organization
-/// - Color customization
+/// - Colour customisation
 /// 
 /// When saved, automatically creates Event records for all scheduled days
 /// within the semester period. Auto-excludes any dates in excludedDates.

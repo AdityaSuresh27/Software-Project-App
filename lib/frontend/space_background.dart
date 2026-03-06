@@ -38,7 +38,7 @@ class _SpaceBackgroundState extends State<SpaceBackground>
       duration: const Duration(seconds: 4),
     )..repeat();
 
-    // Spawn shooting stars at random intervals (every 3-5 seconds), max 2 concurrent
+    // Spawn shooting stars at random intervals (every 3-5 seconds), max 3 concurrent
     _shootingStarTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       if (!mounted) return;
       setState(() {
@@ -52,10 +52,10 @@ class _SpaceBackgroundState extends State<SpaceBackground>
         // Remove finished stars
         _shootingStars.removeWhere((s) => s.progress >= 1.0);
         
-        // Only spawn if we have fewer than 2 concurrent
-        if (_shootingStars.length < 2) {
-          // Random chance to spawn (roughly every 3-5 seconds at 50ms ticks)
-          if (math.Random().nextDouble() < 0.035) {
+        // Only spawn if we have fewer than 3 concurrent (slightly increased)
+        if (_shootingStars.length < 3) {
+          // Random chance to spawn (roughly every 2-3 seconds at 50ms ticks)
+          if (math.Random().nextDouble() < 0.05) {
             _shootingStars.add(_ShootingStar.random(1080, 2400));
           }
         }
@@ -98,21 +98,21 @@ class _SpaceBackgroundState extends State<SpaceBackground>
           children: [
             // Aurora glow – top right
             Positioned(
-              top: -200 + so * 0.18 + math.sin(drift * math.pi * 2) * 2.5,
-              right: -120 + math.cos(drift * math.pi * 1.7) * 1.8,
-              child: _glowOrb(520, const Color(0xFF00D9FF), 0.06),
+              top: -200 + so * 0.18 + math.sin(drift * math.pi * 2) * 4.5,
+              right: -120 + math.cos(drift * math.pi * 1.7) * 3.2,
+              child: _glowOrb(520, const Color(0xFF00D9FF), 0.08),
             ),
             // Aurora glow – mid left
             Positioned(
-              top: h * 0.35 + so * 0.12 + math.sin((drift + 0.3) * math.pi * 2) * 2.0,
-              left: -180 + math.cos((drift + 0.3) * math.pi * 1.5) * 2.2,
-              child: _glowOrb(480, const Color(0xFF0077B6), 0.07),
+              top: h * 0.35 + so * 0.12 + math.sin((drift + 0.3) * math.pi * 2) * 3.8,
+              left: -180 + math.cos((drift + 0.3) * math.pi * 1.5) * 3.5,
+              child: _glowOrb(480, const Color(0xFF0077B6), 0.10),
             ),
             // Aurora glow – bottom right
             Positioned(
-              bottom: -260 + so * 0.10 + math.sin((drift + 0.6) * math.pi * 2) * 2.8,
-              right: -100 + math.cos((drift + 0.6) * math.pi * 1.9) * 1.5,
-              child: _glowOrb(600, const Color(0xFF023E8A), 0.09),
+              bottom: -260 + so * 0.10 + math.sin((drift + 0.6) * math.pi * 2) * 4.2,
+              right: -100 + math.cos((drift + 0.6) * math.pi * 1.9) * 2.8,
+              child: _glowOrb(600, const Color(0xFF023E8A), 0.12),
             ),
 
             // Stars with twinkling

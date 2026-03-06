@@ -540,49 +540,79 @@ class _RopePainter extends CustomPainter {
       ..moveTo(cx, anchorY)
       ..cubicTo(cp1x, cp1y, cp2x, cp2y, knotX, ky);
 
+    // Dark shadow/depth strand (left offset)
+    canvas.drawPath(path, Paint()
+      ..color = const Color(0xFF001F3F).withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5.5
+      ..strokeCap = StrokeCap.round);
+
+    // Main rope body (thicker)
+    canvas.drawPath(path, Paint()
+      ..color = const Color(0xFF0099CC).withValues(alpha: 0.75)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.8
+      ..strokeCap = StrokeCap.round);
+
+    // Mid-tone fiber strands
+    for (int i = 0; i < 3; i++) {
+      final offset = Offset(
+        math.sin(i * math.pi / 1.5) * 1.2,
+        math.cos(i * 0.7) * 0.8,
+      );
+      final strandPath = Path()
+        ..moveTo(cx + offset.dx, anchorY + offset.dy)
+        ..cubicTo(cp1x + offset.dx * 0.5, cp1y, cp2x + offset.dx * 0.3, cp2y, knotX + offset.dx * 0.4, ky);
+      canvas.drawPath(strandPath, Paint()
+        ..color = const Color(0xFF00D9FF).withValues(alpha: 0.40)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..strokeCap = StrokeCap.round);
+    }
+
     // Soft outer glow
     canvas.drawPath(path, Paint()
-      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.10)
+      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 16
+      ..strokeWidth = 18
       ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
 
-    // Main rope line
+    // Bright highlight thread (right side)
     canvas.drawPath(path, Paint()
-      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.60)
+      ..color = Colors.white.withValues(alpha: 0.28)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.2
+      ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round);
 
-    // Bright highlight thread
-    canvas.drawPath(path, Paint()
-      ..color = Colors.white.withValues(alpha: 0.22)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.9
-      ..strokeCap = StrokeCap.round);
-
-    // Anchor pin at top
+    // Anchor pin at top (more realistic)
     final pinRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(cx, anchorY + 5), width: 7, height: 11),
+      Rect.fromCenter(center: Offset(cx, anchorY + 6), width: 9, height: 14),
       const Radius.circular(2));
     canvas.drawRRect(pinRect, Paint()
-      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.75)
+      ..color = const Color(0xFF003D6B).withValues(alpha: 0.95)
       ..style = PaintingStyle.fill);
-
-    // Glowing knot at bottom
-    canvas.drawCircle(Offset(knotX, ky), 13, Paint()
-      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.14)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
-    canvas.drawCircle(Offset(knotX, ky), 7, Paint()
-      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.90));
-    canvas.drawCircle(Offset(knotX, ky), 7, Paint()
-      ..color = const Color(0xFF00D9FF)
+    canvas.drawRRect(pinRect, Paint()
+      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.50)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2);
-    // Inner highlight on knot
-    canvas.drawCircle(Offset(knotX - 2, ky - 2), 2, Paint()
-      ..color = Colors.white.withValues(alpha: 0.35));
+      ..strokeWidth = 1.0);
+
+    // Rope ending knot with better detail
+    // Outer glow
+    canvas.drawCircle(Offset(knotX, ky), 16, Paint()
+      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
+    // Main knot body
+    canvas.drawCircle(Offset(knotX, ky), 9, Paint()
+      ..color = const Color(0xFF0099CC).withValues(alpha: 0.95));
+    // Highlight
+    canvas.drawCircle(Offset(knotX - 2.5, ky - 2.5), 3, Paint()
+      ..color = Colors.white.withValues(alpha: 0.40));
+    // Rim
+    canvas.drawCircle(Offset(knotX, ky), 9, Paint()
+      ..color = const Color(0xFF00D9FF).withValues(alpha: 0.60)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5);
   }
 
   @override
