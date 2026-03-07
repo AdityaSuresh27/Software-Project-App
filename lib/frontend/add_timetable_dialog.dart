@@ -41,15 +41,13 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
 
   List<int> _selectedDays = [];
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
-  int _periodDurationMinutes = 60; // Default 1 hour
+  TimeOfDay _endTime = const TimeOfDay(hour: 10, minute: 0);
   String? _selectedCategory;
   Color _selectedColor = AppTheme.classBlue;
   int _periodCount = 1;
 
   DateTime? _semesterStart;
   DateTime? _semesterEnd;
-
-  final List<int> _durationOptions = [30, 45, 50, 60, 75, 90, 120, 180]; // in minutes
 
   @override
   void initState() {
@@ -62,6 +60,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
       _roomController.text = widget.editEntry!.room ?? '';
       _selectedDays = List.from(widget.editEntry!.daysOfWeek);
       _startTime = widget.editEntry!.startTime;
+      _endTime = widget.editEntry!.endTime;
       _selectedCategory = widget.editEntry!.category;
       _semesterStart = widget.editEntry!.semesterStart;
       _semesterEnd = widget.editEntry!.semesterEnd;
@@ -70,11 +69,6 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
       if (widget.editEntry!.color != null) {
         _selectedColor = Color(int.parse(widget.editEntry!.color!.replaceFirst('#', '0xFF')));
       }
-      
-      // Calculate period duration from existing entry
-      final startMinutes = widget.editEntry!.startTime.hour * 60 + widget.editEntry!.startTime.minute;
-      final endMinutes = widget.editEntry!.endTime.hour * 60 + widget.editEntry!.endTime.minute;
-      _periodDurationMinutes = endMinutes - startMinutes;
     } else {
       // Set defaults for new entries
       _semesterStart = DateTime.now();
@@ -91,12 +85,6 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
     super.dispose();
   }
 
-  TimeOfDay _calculateEndTime() {
-    final startMinutes = _startTime.hour * 60 + _startTime.minute;
-    final endMinutes = startMinutes + _periodDurationMinutes;
-    return TimeOfDay(hour: endMinutes ~/ 60, minute: endMinutes % 60);
-  }
-
   Future<void> _selectStartTime() async {
     final time = await showTimePicker(
       context: context,
@@ -106,6 +94,28 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
     if (time != null) {
       setState(() {
         _startTime = time;
+        // Auto-adjust end time if it's before the new start time
+        final startMinutes = _startTime.hour * 60 + _startTime.minute;
+        final endMinutes = _endTime.hour * 60 + _endTime.minute;
+        if (endMinutes <= startMinutes) {
+          _endTime = TimeOfDay(
+            hour: (_startTime.hour + 1) % 24,
+            minute: _startTime.minute,
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _selectEndTime() async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: _endTime,
+    );
+
+    if (time != null) {
+      setState(() {
+        _endTime = time;
       });
     }
   }
@@ -122,11 +132,10 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
       }
 
       final dataProvider = Provider.of<DataProvider>(context, listen: false);
-      final endTime = _calculateEndTime();
 
       if (widget.editEntry != null) {
         // Show edit options dialog
-        _showEditOptionsDialog(context, dataProvider, endTime);
+        _showEditOptionsDialog(context, dataProvider);
       } else {
         // Create new entry
         final entry = TimetableEntry(
@@ -137,7 +146,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
           room: _roomController.text.isEmpty ? null : _roomController.text,
           daysOfWeek: _selectedDays,
           startTime: _startTime,
-          endTime: endTime,
+          endTime: _endTime,
           category: _selectedCategory,
           color: '#${_selectedColor.toARGB32().toRadixString(16).substring(2)}',
           semesterStart: _semesterStart,
@@ -157,7 +166,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
     }
   }
 
-  void _showEditOptionsDialog(BuildContext context, DataProvider dataProvider, TimeOfDay endTime) {
+  void _showEditOptionsDialog(BuildContext context, DataProvider dataProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -194,7 +203,7 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
                 room: _roomController.text.isEmpty ? null : _roomController.text,
                 daysOfWeek: _selectedDays,
                 startTime: _startTime,
-                endTime: endTime,
+                endTime: _endTime,
                 category: _selectedCategory,
                 color: '#${_selectedColor.toARGB32().toRadixString(16).substring(2)}',
                 semesterStart: _semesterStart,
@@ -226,7 +235,6 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
   @override
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context);
-    final endTime = _calculateEndTime();
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -379,18 +387,21 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Period duration
-AppDropdown<int>(
-  value: _periodDurationMinutes,
-  label: 'Period Duration',
-  prefixIcon: Icons.timer_outlined,
-  accentColor: _selectedColor,
-  items: _durationOptions.map((m) => AppDropdownItem(value: m, label: _formatDuration(m))).toList(),
-  onChanged: (value) => setState(() => _periodDurationMinutes = value!),
-), 
-                      const SizedBox(height: 16),
+                      // End time
+                      InkWell(
+                        onTap: _selectEndTime,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InputDecorator(
+                          decoration: _buildInputDecoration('End Time', Icons.access_time),
+                          child: Text(
+                            _endTime.format(context),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-                      // Calculated end time (display only)
+                      // Duration display (informational only)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -405,12 +416,14 @@ AppDropdown<int>(
                           children: [
                             Icon(Icons.schedule, color: _selectedColor),
                             const SizedBox(width: 12),
-                            Text(
-                              'End Time: ${endTime.format(context)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: _selectedColor,
+                            Expanded(
+                              child: Text(
+                                'Duration: ${_calculateDuration()}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: _selectedColor,
+                                ),
                               ),
                             ),
                           ],
@@ -719,6 +732,32 @@ AppPopupMenuButton<String?>(
     );
   }
 
+  String _calculateDuration() {
+    final startMinutes = _startTime.hour * 60 + _startTime.minute;
+    final endMinutes = _endTime.hour * 60 + _endTime.minute;
+    int durationMinutes;
+    
+    if (endMinutes > startMinutes) {
+      durationMinutes = endMinutes - startMinutes;
+    } else if (endMinutes == startMinutes) {
+      durationMinutes = 0;
+    } else {
+      // End time is next day
+      durationMinutes = (24 * 60) - startMinutes + endMinutes;
+    }
+
+    final hours = durationMinutes ~/ 60;
+    final minutes = durationMinutes % 60;
+    
+    if (hours == 0) {
+      return '$minutes minutes';
+    } else if (minutes == 0) {
+      return '$hours hour${hours > 1 ? 's' : ''}';
+    } else {
+      return '$hours hr $minutes min';
+    }
+  }
+
   InputDecoration _buildInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
@@ -738,18 +777,5 @@ AppPopupMenuButton<String?>(
         borderSide: BorderSide(color: _selectedColor, width: 2),
       ),
     );
-  }
-
-  String _formatDuration(int minutes) {
-    if (minutes < 60) {
-      return '$minutes min';
-    } else {
-      final hours = minutes ~/ 60;
-      final mins = minutes % 60;
-      if (mins == 0) {
-        return '$hours hour${hours > 1 ? 's' : ''}';
-      }
-      return '$hours hr $mins min';
-    }
   }
 }
