@@ -33,21 +33,28 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> _loadThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
-    final themeModeString = prefs.getString('themeMode') ?? 'light'; // Changed default
-    _backgroundTheme = prefs.getString('backgroundTheme') ?? 'minimalistic';
-    
+    final themeModeString = prefs.getString('themeMode') ?? 'light';
+    final savedBackground = prefs.getString('backgroundTheme') ?? 'minimalistic';
+
+    late ThemeMode loadedMode;
     switch (themeModeString) {
       case 'light':
-        _themeMode = ThemeMode.light;
+        loadedMode = ThemeMode.light;
         break;
       case 'dark':
-        _themeMode = ThemeMode.dark;
+        loadedMode = ThemeMode.dark;
         break;
       default:
-        _themeMode = ThemeMode.light; // Changed default
+        loadedMode = ThemeMode.light;
     }
-    
-    notifyListeners();
+
+    // Only notify if something actually changed — avoids rebuilding the whole
+    // MaterialApp (and restarting welcome animations) when defaults are loaded.
+    if (loadedMode != _themeMode || savedBackground != _backgroundTheme) {
+      _themeMode = loadedMode;
+      _backgroundTheme = savedBackground;
+      notifyListeners();
+    }
   }
 
   Future<void> setBackgroundTheme(String theme) async {

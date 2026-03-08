@@ -43,13 +43,17 @@ class AddEventDialog extends StatefulWidget {
 }
 
 class _AddEventDialogState extends State<AddEventDialog>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  static final AudioPlayer _soundPlayer = AudioPlayer();
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _locationController = TextEditingController();
   final _notesController = TextEditingController();
 
   late TabController _tabController;
+  late AnimationController _enterAnim;
+  late Animation<double> _scaleValue;
+  late Animation<double> _opacityValue;
 
   String _selectedClassification = 'class';
   String? _selectedCategory;
@@ -89,6 +93,17 @@ class _AddEventDialogState extends State<AddEventDialog>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _enterAnim = AnimationController(
+      duration: const Duration(milliseconds: 420),
+      vsync: this,
+    );
+    _scaleValue = Tween<double>(begin: 0.88, end: 1.0).animate(
+      CurvedAnimation(parent: _enterAnim, curve: Curves.easeOutCubic),
+    );
+    _opacityValue = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _enterAnim, curve: Curves.easeOut),
+    );
+    _enterAnim.forward();
 
     if (widget.presetClassification != null) {
       _selectedClassification = widget.presetClassification!;
@@ -118,6 +133,7 @@ class _AddEventDialogState extends State<AddEventDialog>
 
   @override
   void dispose() {
+    _enterAnim.dispose();
     _titleController.dispose();
     _locationController.dispose();
     _notesController.dispose();
@@ -202,10 +218,25 @@ class _AddEventDialogState extends State<AddEventDialog>
             );
             if (isStart) {
               _startTime = newDateTime;
-              if (_endTime != null && _endTime!.isBefore(_startTime!)) {
+              // Auto-push end time forward if it would become invalid
+              if (_endTime != null && !_endTime!.isAfter(_startTime!)) {
                 _endTime = _startTime!.add(const Duration(hours: 1));
               }
             } else {
+              // Reject an end time that is not strictly after start
+              if (!newDateTime.isAfter(_startTime!)) {
+                // defer notification until after setState
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    AppTheme.showTopNotification(
+                      context,
+                      'End time must be after the start time.',
+                      type: NotificationType.warning,
+                    );
+                  }
+                });
+                return; // keep old _endTime
+              }
               _endTime = newDateTime;
             }
           });
@@ -301,7 +332,6 @@ void _saveEvent() async {
   }
 
   final dataProvider = Provider.of<DataProvider>(context, listen: false);
-  final audioPlayer = AudioPlayer();
 
   if (widget.editEvent != null) {
     final oldClassification = widget.editEvent!.classification;
@@ -371,17 +401,18 @@ void _saveEvent() async {
     );
     dataProvider.addEvent(event);
     
-    // Play accept sound when event is created (if not muted)
+    // Play accept sound — await with try-catch so the dialog still closes on error
     if (!dataProvider.muteRingtone) {
       try {
-        await audioPlayer.play(AssetSource('accept1.mp3'));
+        await _soundPlayer.stop();
+        await _soundPlayer.play(AssetSource('accept1.mp3'));
       } catch (e) {
         debugPrint('Error playing accept1.mp3: $e');
       }
     }
   }
 
-  Navigator.pop(context);
+  if (mounted) Navigator.pop(context);
 }
 
   @override
@@ -396,15 +427,13 @@ void _saveEvent() async {
           maxHeight: MediaQuery.of(context).size.height * 0.9,
           maxWidth: 600,
         ),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOutCubic,
-          builder: (context, value, child) {
+        child: AnimatedBuilder(
+          animation: _enterAnim,
+          builder: (context, child) {
             return Transform.scale(
-              scale: 0.9 + (0.1 * value),
+              scale: _scaleValue.value,
               child: Opacity(
-                opacity: value,
+                opacity: _opacityValue.value,
                 child: child,
               ),
             );

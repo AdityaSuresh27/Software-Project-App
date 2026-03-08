@@ -41,6 +41,7 @@ class EventActionDialog extends StatefulWidget {
 
 class _EventActionDialogState extends State<EventActionDialog> {
   late Event currentEvent;
+  static final AudioPlayer _soundPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -180,6 +181,17 @@ class _EventActionDialogState extends State<EventActionDialog> {
                             color: color,
                           ),
                           const SizedBox(height: 12),
+
+                          if (event.endTime != null) ...[  
+                            _buildDetailItem(
+                              context,
+                              icon: Icons.timelapse,
+                              label: 'Duration',
+                              value: _formatEventDuration(),
+                              color: color,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
 
                           if (event.location != null && event.location!.isNotEmpty) ...[
                             _buildDetailItem(
@@ -531,6 +543,19 @@ class _EventActionDialogState extends State<EventActionDialog> {
         children: badges,
       ),
     );
+  }
+
+  String _formatEventDuration() {
+    if (currentEvent.endTime == null) return '';
+    final diff = currentEvent.endTime!.difference(currentEvent.startTime);
+    final days = diff.inDays;
+    final hours = diff.inHours % 24;
+    final minutes = diff.inMinutes % 60;
+    final parts = <String>[];
+    if (days > 0) parts.add('$days day${days > 1 ? 's' : ''}');
+    if (hours > 0) parts.add('${hours}h');
+    if (minutes > 0) parts.add('${minutes}min');
+    return parts.isEmpty ? '0 min' : parts.join(' ');
   }
 
   String _formatDateTime() {
@@ -1150,27 +1175,22 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
       // Update the event in the provider
       dataProvider.updateEvent(widget.event);
       
-      // Close the dialog
-      if (context.mounted) {
-        Navigator.pop(context);
-      }
+      Navigator.pop(context);
       
-      // Show notification after closing dialog
-      if (context.mounted) {
-        AppTheme.showTopNotification(
-          context,
-          'Attendance has been cleared for this class.',
-          type: NotificationType.warning,
-        );
-      }
+      AppTheme.showTopNotification(
+        context,
+        'Attendance has been cleared for this class.',
+        type: NotificationType.warning,
+      );
     }
   }
 
   void _markAttendance(BuildContext context, AttendanceStatus status) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     
+    final recordId = const Uuid().v4();
     final record = AttendanceRecord(
-      id: const Uuid().v4(),
+      id: recordId,
       courseName: widget.event.title,
       date: widget.event.startTime,
       status: status,
@@ -1184,9 +1204,7 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
     widget.event.isCompleted = true; 
     dataProvider.updateEvent(widget.event);
     
-    Navigator.pop(context);
-    
-    // Show gamification popup only for today's events
+    // Show gamification popup BEFORE popping so context remains valid
     final now = DateTime.now();
     final isToday = widget.event.startTime.year == now.year &&
                     widget.event.startTime.month == now.month &&
@@ -1197,7 +1215,16 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
         widget.event.title,
         status.name == 'present' ? 'present' : status.name == 'absent' ? 'absent' : 'cancelled',
       );
+    } else if (!dataProvider.muteRingtone) {
+      try {
+        await _soundPlayer.stop();
+        await _soundPlayer.play(AssetSource('accept2.mp3'));
+      } catch (e) {
+        debugPrint('Error playing accept2.mp3: $e');
+      }
     }
+    
+    if (mounted) Navigator.pop(context);
   }
 
   Color _getAttendanceColor(AttendanceStatus status) {
@@ -1380,74 +1407,77 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
 
   Future<void> _markEventAsCompleted(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    
     widget.event.isCompleted = true;
     widget.event.isMissed = false;
     widget.event.isCancelled = false;
     dataProvider.updateEvent(widget.event);
-    
-    Navigator.pop(context);
-    
-    // Show gamification popup only for today's events
     final now = DateTime.now();
     final isToday = widget.event.startTime.year == now.year &&
                     widget.event.startTime.month == now.month &&
                     widget.event.startTime.day == now.day;
     if (isToday) {
       await GamificationPopupService.showEventStatusPopup(
-        context,
-        widget.event.title,
-        'completed',
+        context, widget.event.title, 'completed',
       );
+    } else if (!dataProvider.muteRingtone) {
+      try {
+        await _soundPlayer.stop();
+        await _soundPlayer.play(AssetSource('accept2.mp3'));
+      } catch (e) {
+        debugPrint('Error playing accept2.mp3: $e');
+      }
     }
+    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _markEventAsMissed(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    
     widget.event.isCompleted = false;
     widget.event.isMissed = true;
     widget.event.isCancelled = false;
     dataProvider.updateEvent(widget.event);
-    
-    Navigator.pop(context);
-    
-    // Show gamification popup only for today's events
     final now = DateTime.now();
     final isToday = widget.event.startTime.year == now.year &&
                     widget.event.startTime.month == now.month &&
                     widget.event.startTime.day == now.day;
     if (isToday) {
       await GamificationPopupService.showEventStatusPopup(
-        context,
-        widget.event.title,
-        'missed',
+        context, widget.event.title, 'missed',
       );
+    } else if (!dataProvider.muteRingtone) {
+      try {
+        await _soundPlayer.stop();
+        await _soundPlayer.play(AssetSource('accept2.mp3'));
+      } catch (e) {
+        debugPrint('Error playing accept2.mp3: $e');
+      }
     }
+    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _markEventAsCancelled(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    
     widget.event.isCompleted = false;
     widget.event.isMissed = false;
     widget.event.isCancelled = true;
     dataProvider.updateEvent(widget.event);
-    
-    Navigator.pop(context);
-    
-    // Show gamification popup only for today's events
     final now = DateTime.now();
     final isToday = widget.event.startTime.year == now.year &&
                     widget.event.startTime.month == now.month &&
                     widget.event.startTime.day == now.day;
     if (isToday) {
       await GamificationPopupService.showEventStatusPopup(
-        context,
-        widget.event.title,
-        'cancelled',
+        context, widget.event.title, 'cancelled',
       );
+    } else if (!dataProvider.muteRingtone) {
+      try {
+        await _soundPlayer.stop();
+        await _soundPlayer.play(AssetSource('accept2.mp3'));
+      } catch (e) {
+        debugPrint('Error playing accept2.mp3: $e');
+      }
     }
+    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _clearEventStatus(BuildContext context) async {

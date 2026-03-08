@@ -34,6 +34,7 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage>
     with TickerProviderStateMixin {
+  static final AudioPlayer _soundPlayer = AudioPlayer();
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
@@ -474,9 +475,9 @@ class _CalendarPageState extends State<CalendarPage>
     
     // Play accept sound when event is duplicated (created) if not muted
     if (!dataProvider.muteRingtone) {
-      final audioPlayer = AudioPlayer();
       try {
-        await audioPlayer.play(AssetSource('accept1.mp3'));
+        await _soundPlayer.stop();
+        await _soundPlayer.play(AssetSource('accept1.mp3'));
       } catch (e) {
         debugPrint('Error playing accept1.mp3: $e');
       }

@@ -104,7 +104,10 @@ class _MainNavigationState extends State<MainNavigation>
     Widget pageContent = NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (isSpaceTheme && notification is ScrollUpdateNotification) {
-          setState(() => _scrollOffset = notification.metrics.pixels);
+          final pixels = notification.metrics.pixels;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _scrollOffset = pixels);
+          });
         }
         return false; // don't absorb — let pages handle scrolling normally
       },

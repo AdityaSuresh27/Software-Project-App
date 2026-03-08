@@ -36,6 +36,7 @@ class EventsPage extends StatefulWidget {
 
 class _EventsPageState extends State<EventsPage>
     with TickerProviderStateMixin {
+  static final AudioPlayer _soundPlayer = AudioPlayer();
   String _filterClassification = 'all';
   String _sortBy = 'date';
   late AnimationController _fadeController;
@@ -348,9 +349,9 @@ class _EventsPageState extends State<EventsPage>
                   
                   // Play completion sound when task is marked complete (if not muted)
                   if (!wasCompleted && !dataProvider.muteRingtone) {
-                    final audioPlayer = AudioPlayer();
                     try {
-                      await audioPlayer.play(AssetSource('accept2.mp3'));
+                      await _soundPlayer.stop();
+                      await _soundPlayer.play(AssetSource('accept2.mp3'));
                     } catch (e) {
                       debugPrint('Error playing accept2.mp3: $e');
                     }

@@ -12,6 +12,7 @@
 /// 
 /// Enhances user engagement through gamification mechanics and positive reinforcement.
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -19,26 +20,24 @@ import '../backend/data_provider.dart';
 import 'theme.dart';
 
 class GamificationPopupService {
+  /// Show the gamification popup.
+  ///
+  /// [context] must be a valid, mounted BuildContext (call this BEFORE
+  /// popping the calling dialog so the context is still in the tree).
   static Future<void> showEventStatusPopup(
     BuildContext context,
     String eventTitle,
     String statusType, // 'completed', 'missed', 'cancelled', 'present', 'absent'
   ) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    
-    if (!dataProvider.gamificationEnabled) {
-      return;
-    }
-
-    // Get current stats
     final now = DateTime.now();
     final statsBefore = dataProvider.getDayGamificationStats(now);
-    
+
     await showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black45,
-      builder: (context) => GamificationPopup(
+      builder: (dialogContext) => GamificationPopup(
         eventTitle: eventTitle,
         statusType: statusType,
         statsBefore: statsBefore,
@@ -70,6 +69,8 @@ class _GamificationPopupState extends State<GamificationPopup>
   late AnimationController _particleController;
   late AnimationController _scaleController;
   late Animation<Offset> _slideAnimation;
+  Timer? _autoCloseTimer;
+  static final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -110,11 +111,11 @@ class _GamificationPopupState extends State<GamificationPopup>
     _scaleController.repeat();
     
     Future.delayed(const Duration(milliseconds: 600), () {
-      _playSound();
+      if (mounted) _playSound();
     });
 
     // Auto close after 4 seconds
-    Future.delayed(const Duration(milliseconds: 4000), () {
+    _autoCloseTimer = Timer(const Duration(milliseconds: 4000), () {
       if (mounted) {
         Navigator.pop(context);
       }
@@ -125,9 +126,8 @@ class _GamificationPopupState extends State<GamificationPopup>
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     if (dataProvider.muteRingtone) return;
 
-    final audioPlayer = AudioPlayer();
     try {
-      audioPlayer.play(AssetSource('accept2.mp3'));
+      _audioPlayer.stop().then((_) => _audioPlayer.play(AssetSource('accept2.mp3')));
     } catch (e) {
       debugPrint('Error playing sound: $e');
     }
@@ -135,6 +135,7 @@ class _GamificationPopupState extends State<GamificationPopup>
 
   @override
   void dispose() {
+    _autoCloseTimer?.cancel();
     _slideController.dispose();
     _bounceController.dispose();
     _particleController.dispose();

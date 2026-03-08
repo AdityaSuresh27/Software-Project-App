@@ -45,14 +45,16 @@ class FontProvider extends ChangeNotifier {
   Future<void> _loadFontFamily() async {
     final prefs = await SharedPreferences.getInstance();
     final savedFont = prefs.getString('fontFamily') ?? 'minimalistic';
-    
-    if (savedFont == 'minimalistic' || savedFont == 'original') {
-      _fontFamily = savedFont;
-    } else {
-      _fontFamily = 'minimalistic';
+    final loaded = (savedFont == 'minimalistic' || savedFont == 'original')
+        ? savedFont
+        : 'minimalistic';
+
+    // Only notify if something actually changed — avoids an unnecessary
+    // MaterialApp rebuild (and welcome screen animation restart) on cold start.
+    if (loaded != _fontFamily) {
+      _fontFamily = loaded;
+      notifyListeners();
     }
-    
-    notifyListeners();
   }
 
   Future<void> setFontFamily(String family) async {

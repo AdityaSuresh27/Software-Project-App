@@ -114,6 +114,18 @@ class _AddTimetableDialogState extends State<AddTimetableDialog> {
     );
 
     if (time != null) {
+      final startMinutes = _startTime.hour * 60 + _startTime.minute;
+      final selectedMinutes = time.hour * 60 + time.minute;
+      if (selectedMinutes <= startMinutes) {
+        if (mounted) {
+          AppTheme.showTopNotification(
+            context,
+            'End time must be after the start time.',
+            type: NotificationType.warning,
+          );
+        }
+        return;
+      }
       setState(() {
         _endTime = time;
       });
