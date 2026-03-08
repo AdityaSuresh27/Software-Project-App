@@ -401,7 +401,7 @@ void _saveEvent() async {
     );
     dataProvider.addEvent(event);
     
-    // Play accept sound — await with try-catch so the dialog still closes on error
+    // Play accept sound on save (regardless of event date, unless muted)
     if (!dataProvider.muteRingtone) {
       try {
         await _soundPlayer.stop();

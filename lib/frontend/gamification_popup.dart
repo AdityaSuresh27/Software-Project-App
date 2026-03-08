@@ -20,6 +20,15 @@ import '../backend/data_provider.dart';
 import 'theme.dart';
 
 class GamificationPopupService {
+  /// Shared AudioPlayer for gamification sounds. Exposed so other services
+  /// (e.g. StreakTierPopupService) can stop it before playing their own sound.
+  static final AudioPlayer audioPlayer = AudioPlayer();
+
+  /// Stop gamification audio immediately (call before playing tier sounds).
+  static Future<void> stopAudio() async {
+    try { await audioPlayer.stop(); } catch (_) {}
+  }
+
   /// Show the gamification popup.
   ///
   /// [context] must be a valid, mounted BuildContext (call this BEFORE
@@ -70,7 +79,6 @@ class _GamificationPopupState extends State<GamificationPopup>
   late AnimationController _scaleController;
   late Animation<Offset> _slideAnimation;
   Timer? _autoCloseTimer;
-  static final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -127,7 +135,9 @@ class _GamificationPopupState extends State<GamificationPopup>
     if (dataProvider.muteRingtone) return;
 
     try {
-      _audioPlayer.stop().then((_) => _audioPlayer.play(AssetSource('accept2.mp3')));
+      GamificationPopupService.audioPlayer.stop().then(
+        (_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')),
+      );
     } catch (e) {
       debugPrint('Error playing sound: $e');
     }

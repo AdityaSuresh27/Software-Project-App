@@ -59,6 +59,7 @@ class DataProvider extends ChangeNotifier {
   bool _muteStartupSound = false; // Mute app launch sound
   bool _muteRingtone = false;     // Mute notification sounds
   bool _gamificationEnabled = true; // Gamified popups for event completion
+  int _streakCount = 0;            // Consecutive non-class task completion streak
   
   // ========== INITIALIZATION & READY STATE ==========
   /// Completes when both _loadData() and _checkAuthStatus() finish
@@ -80,6 +81,7 @@ class DataProvider extends ChangeNotifier {
   bool get muteStartupSound => _muteStartupSound;
   bool get muteRingtone => _muteRingtone;
   bool get gamificationEnabled => _gamificationEnabled;
+  int get streakCount => _streakCount;
 
   /// Constructor - Initializes data loading from SharedPreferences
   /// Loads both user data and authentication status concurrently
@@ -100,6 +102,7 @@ Future<void> _checkAuthStatus() async {
     _muteStartupSound = prefs.getBool('muteStartupSound') ?? false;
     _muteRingtone = prefs.getBool('muteRingtone') ?? false;
     _gamificationEnabled = prefs.getBool('gamificationEnabled') ?? true;
+    _streakCount = prefs.getInt('streakCount') ?? 0;
 
     // Load avatar from SharedPreferences
     final avatarJson = prefs.getString('userAvatar');
@@ -165,12 +168,14 @@ Future<void> _checkAuthStatus() async {
     await prefs.remove('categories');
     await prefs.remove('timetable');
     await prefs.remove('attendance');
+    await prefs.remove('streakCount');
     _isAuthenticated = false;
     _lastActiveAt = null;
     _events = [];
     _categories = [];
     _timetableEntries = [];
     _attendanceRecords = [];
+    _streakCount = 0;
     notifyListeners();
   }
 
@@ -244,6 +249,35 @@ Future<void> _checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('gamificationEnabled', enabled);
     _gamificationEnabled = enabled;
+    notifyListeners();
+  }
+
+  /// Increments the streak counter (non-class task completed). Persists asynchronously.
+  void incrementStreak() {
+    _streakCount++;
+    SharedPreferences.getInstance().then((p) => p.setInt('streakCount', _streakCount));
+    notifyListeners();
+  }
+
+  /// Applies a −5 penalty (non-class task marked missed). Persists asynchronously.
+  void applyMissedPenalty() {
+    _streakCount = (_streakCount - 5).clamp(0, 99999);
+    SharedPreferences.getInstance().then((p) => p.setInt('streakCount', _streakCount));
+    notifyListeners();
+  }
+
+  /// Soft −1 decrement when un-marking a previously completed event (no penalty).
+  /// Reverses the +1 that was given for completion.
+  void softDecrementStreak() {
+    if (_streakCount > 0) _streakCount--;
+    SharedPreferences.getInstance().then((p) => p.setInt('streakCount', _streakCount));
+    notifyListeners();
+  }
+
+  /// Reverses a missed-event penalty: +5 back (when un-marking a previously missed event).
+  void reverseMissedPenalty() {
+    _streakCount += 5;
+    SharedPreferences.getInstance().then((p) => p.setInt('streakCount', _streakCount));
     notifyListeners();
   }
 

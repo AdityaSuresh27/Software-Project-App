@@ -216,6 +216,7 @@ class _CalendarPageState extends State<CalendarPage>
                           leftChevronIcon: const Icon(Icons.chevron_left),
                           rightChevronIcon: const Icon(Icons.chevron_right),
                         ),
+                        daysOfWeekHeight: 22.0,
                       ),
                     ),
                   ),
@@ -294,9 +295,13 @@ class _CalendarPageState extends State<CalendarPage>
   Widget _buildEventCard(BuildContext context, Event event, DataProvider dataProvider, int index) {
     final color = event.completionColor != null
         ? Color(int.parse(event.completionColor!.replaceFirst('#', '0xFF')))
-        : (event.isCompleted 
-            ? AppTheme.successGreen 
-            : AppTheme.getClassificationColor(event.classification));
+        : event.isCompleted
+            ? AppTheme.successGreen
+            : event.isMissed
+                ? AppTheme.errorRed
+                : event.isCancelled
+                    ? AppTheme.otherGray
+                    : AppTheme.getClassificationColor(event.classification);
     
    String timeText;
     if (event.hasEndTime) {
@@ -344,9 +349,13 @@ class _CalendarPageState extends State<CalendarPage>
                     children: [
                       Center(
                         child: Icon(
-                          event.isCompleted || event.completionColor != null
+                          event.completionColor != null || event.isCompleted
                               ? Icons.check_circle
-                              : AppTheme.getClassificationIcon(event.classification),
+                              : event.isMissed
+                                  ? Icons.cancel
+                                  : event.isCancelled
+                                      ? Icons.block
+                                      : AppTheme.getClassificationIcon(event.classification),
                           color: color,
                         ),
                       ),
@@ -372,7 +381,7 @@ class _CalendarPageState extends State<CalendarPage>
                         event.title,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: event.isImportant ? FontWeight.w700 : FontWeight.w500,
-                          decoration: event.isCompleted ? TextDecoration.lineThrough : null,
+                          decoration: (event.isCompleted || event.isMissed || event.isCancelled) ? TextDecoration.lineThrough : null,
                         ),
                       ),
                       const SizedBox(height: 4),

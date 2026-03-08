@@ -27,6 +27,7 @@ import 'manage_categories_page.dart';
 import 'privacy_policy_page.dart';
 import 'animated_avatar.dart';
 import 'avatar_customizer.dart';
+import 'streak_tier_popup.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -512,22 +513,30 @@ class _ProfilePageState extends State<ProfilePage>
                   await dataProvider.setAvatar(selectedAvatar);
                 }
               },
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppTheme.primaryBlue,
-                    width: 2,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Planet ring background
+                  PlanetCircle(
+                    tierIndex: StreakService.getTierIndex(dataProvider.streakCount),
+                    size: 90,
+                    animate: true,
                   ),
-                ),
-                child: AnimatedAvatar(
-                  avatar: dataProvider.avatar,
-                  size: 70,
-                  autoAnimate: true,
-                ),
+                  // Avatar on top
+                  Container(
+                    width: 66,
+                    height: 66,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: AnimatedAvatar(
+                      avatar: dataProvider.avatar,
+                      size: 60,
+                      autoAnimate: true,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 20),
@@ -544,22 +553,47 @@ class _ProfilePageState extends State<ProfilePage>
                     'student@university.edu',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Student',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 10),
+                  // Planet rank badge
+                  Builder(builder: (context) {
+                    final tierIdx = StreakService.getTierIndex(dataProvider.streakCount);
+                    final tierInfo = StreakService.getTierInfo(tierIdx);
+                    final nextHint = StreakService.nextPlanetHint(tierIdx);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            PlanetCircle(
+                              tierIndex: tierIdx,
+                              size: 22,
+                              animate: false,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${tierInfo.name}  •  🔥 ${dataProvider.streakCount} pts',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: tierInfo.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (nextHint != null) ...[  
+                          const SizedBox(height: 2),
+                          Text(
+                            nextHint,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontSize: 10,
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),

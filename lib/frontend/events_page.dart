@@ -26,6 +26,7 @@ import 'add_event_dialog.dart';
 import '../backend/data_provider.dart';
 import '../backend/models.dart';
 import 'event_action_dialog.dart';
+import 'streak_tier_popup.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -292,7 +293,15 @@ class _EventsPageState extends State<EventsPage>
     }
     
   Widget _buildEventCard(BuildContext context, Event event, DataProvider dataProvider, int index) {
-    final color = AppTheme.getClassificationColor(event.classification);
+    final color = event.completionColor != null
+        ? Color(int.parse(event.completionColor!.replaceFirst('#', '0xFF')))
+        : event.isCompleted
+            ? AppTheme.successGreen
+            : event.isMissed
+                ? AppTheme.errorRed
+                : event.isCancelled
+                    ? AppTheme.otherGray
+                    : AppTheme.getClassificationColor(event.classification);
     final daysUntil = event.startTime.difference(DateTime.now()).inDays;
     final now = DateTime.now();
     
@@ -343,7 +352,7 @@ class _EventsPageState extends State<EventsPage>
           children: [
             if (event.isTask)
               SlidableAction(
-                onPressed: (context) async {
+                onPressed: (_) async {
                   final wasCompleted = event.isCompleted;
                   dataProvider.toggleEventComplete(event.id);
                   
@@ -355,6 +364,26 @@ class _EventsPageState extends State<EventsPage>
                     } catch (e) {
                       debugPrint('Error playing accept2.mp3: $e');
                     }
+                  }
+
+                  // Track streak for task completion / un-completion
+                  final oldTier = StreakService.getTierIndex(dataProvider.streakCount);
+                  if (!wasCompleted) {
+                    // Marking complete → +1
+                    dataProvider.incrementStreak();
+                  } else {
+                    // Un-marking a completed task → −1 (no penalty, just revert)
+                    dataProvider.softDecrementStreak();
+                  }
+                  final newTier = StreakService.getTierIndex(dataProvider.streakCount);
+                  if (newTier != oldTier && mounted) {
+                    await StreakTierPopupService.showTierChange(
+                      this.context,
+                      oldTier: oldTier,
+                      newTier: newTier,
+                      muteRingtone: dataProvider.muteRingtone,
+                      streakCount: dataProvider.streakCount,
+                    );
                   }
                 },
                 backgroundColor: AppTheme.successGreen,
@@ -398,9 +427,13 @@ class _EventsPageState extends State<EventsPage>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        event.isCompleted
+                        event.completionColor != null || event.isCompleted
                             ? Icons.check_circle
-                            : AppTheme.getClassificationIcon(event.classification),
+                            : event.isMissed
+                                ? Icons.cancel
+                                : event.isCancelled
+                                    ? Icons.block
+                                    : AppTheme.getClassificationIcon(event.classification),
                         color: color,
                       ),
                     ),
@@ -412,7 +445,7 @@ class _EventsPageState extends State<EventsPage>
                           Text(
                             event.title,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              decoration: event.isCompleted
+                              decoration: (event.isCompleted || event.isMissed || event.isCancelled)
                                   ? TextDecoration.lineThrough
                                   : null,
                             ),

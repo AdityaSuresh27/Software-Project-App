@@ -26,6 +26,7 @@ import '../backend/timetable_models.dart';
 import 'theme.dart';
 import 'add_event_dialog.dart';
 import 'gamification_popup.dart';
+import 'streak_tier_popup.dart';
 
 class EventActionDialog extends StatefulWidget {
   final Event event;
@@ -41,7 +42,6 @@ class EventActionDialog extends StatefulWidget {
 
 class _EventActionDialogState extends State<EventActionDialog> {
   late Event currentEvent;
-  static final AudioPlayer _soundPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -1209,22 +1209,21 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
     final isToday = widget.event.startTime.year == now.year &&
                     widget.event.startTime.month == now.month &&
                     widget.event.startTime.day == now.day;
-    if (isToday) {
+    if (mounted) Navigator.pop(context);
+    if (!context.mounted) return;
+    final bool gameEnabled = dataProvider.gamificationEnabled;
+    final bool notMuted = !dataProvider.muteRingtone;
+    if (gameEnabled && isToday) {
       await GamificationPopupService.showEventStatusPopup(
         context,
         widget.event.title,
         status.name == 'present' ? 'present' : status.name == 'absent' ? 'absent' : 'cancelled',
       );
-    } else if (!dataProvider.muteRingtone) {
-      try {
-        await _soundPlayer.stop();
-        await _soundPlayer.play(AssetSource('accept2.mp3'));
-      } catch (e) {
-        debugPrint('Error playing accept2.mp3: $e');
-      }
+    } else if (notMuted) {
+      GamificationPopupService.audioPlayer
+          .stop()
+          .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
     }
-    
-    if (mounted) Navigator.pop(context);
   }
 
   Color _getAttendanceColor(AttendanceStatus status) {
@@ -1411,23 +1410,74 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
     widget.event.isMissed = false;
     widget.event.isCancelled = false;
     dataProvider.updateEvent(widget.event);
+    final oldTier = StreakService.getTierIndex(dataProvider.streakCount);
+    dataProvider.incrementStreak();
+    final newTier = StreakService.getTierIndex(dataProvider.streakCount);
+    final bool rankChanged = newTier != oldTier;
     final now = DateTime.now();
-    final isToday = widget.event.startTime.year == now.year &&
-                    widget.event.startTime.month == now.month &&
-                    widget.event.startTime.day == now.day;
-    if (isToday) {
-      await GamificationPopupService.showEventStatusPopup(
-        context, widget.event.title, 'completed',
-      );
-    } else if (!dataProvider.muteRingtone) {
-      try {
-        await _soundPlayer.stop();
-        await _soundPlayer.play(AssetSource('accept2.mp3'));
-      } catch (e) {
-        debugPrint('Error playing accept2.mp3: $e');
+    final bool isToday = widget.event.startTime.year == now.year &&
+                         widget.event.startTime.month == now.month &&
+                         widget.event.startTime.day == now.day;
+    if (mounted) Navigator.pop(context);
+    if (!context.mounted) return;
+    final bool gameEnabled = dataProvider.gamificationEnabled;
+    final bool notMuted = !dataProvider.muteRingtone;
+    if (gameEnabled) {
+      if (isToday && !rankChanged) {
+        // game popup + accept2 (popup handles sound internally)
+        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'completed');
+      } else if (!isToday && !rankChanged) {
+        // no popup, just accept2
+        if (notMuted) {
+          GamificationPopupService.audioPlayer
+              .stop()
+              .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
+        }
+      } else if (isToday && rankChanged) {
+        // game popup + accept2, then planet popup + win.mp3
+        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'completed');
+        if (context.mounted) {
+          await StreakTierPopupService.showTierChange(
+            context,
+            oldTier: oldTier,
+            newTier: newTier,
+            muteRingtone: dataProvider.muteRingtone,
+            streakCount: dataProvider.streakCount,
+          );
+        }
+      } else {
+        // other day + rank changed: only planet popup + win.mp3
+        if (context.mounted) {
+          await StreakTierPopupService.showTierChange(
+            context,
+            oldTier: oldTier,
+            newTier: newTier,
+            muteRingtone: dataProvider.muteRingtone,
+            streakCount: dataProvider.streakCount,
+          );
+        }
+      }
+    } else {
+      if (!rankChanged) {
+        // just accept2 (all days)
+        if (notMuted) {
+          GamificationPopupService.audioPlayer
+              .stop()
+              .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
+        }
+      } else {
+        // planet popup + win.mp3 (all days)
+        if (context.mounted) {
+          await StreakTierPopupService.showTierChange(
+            context,
+            oldTier: oldTier,
+            newTier: newTier,
+            muteRingtone: dataProvider.muteRingtone,
+            streakCount: dataProvider.streakCount,
+          );
+        }
       }
     }
-    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _markEventAsMissed(BuildContext context) async {
@@ -1436,23 +1486,68 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
     widget.event.isMissed = true;
     widget.event.isCancelled = false;
     dataProvider.updateEvent(widget.event);
+    final oldTier = StreakService.getTierIndex(dataProvider.streakCount);
+    dataProvider.applyMissedPenalty();
+    final newTier = StreakService.getTierIndex(dataProvider.streakCount);
+    final bool rankChanged = newTier != oldTier;
     final now = DateTime.now();
-    final isToday = widget.event.startTime.year == now.year &&
-                    widget.event.startTime.month == now.month &&
-                    widget.event.startTime.day == now.day;
-    if (isToday) {
-      await GamificationPopupService.showEventStatusPopup(
-        context, widget.event.title, 'missed',
-      );
-    } else if (!dataProvider.muteRingtone) {
-      try {
-        await _soundPlayer.stop();
-        await _soundPlayer.play(AssetSource('accept2.mp3'));
-      } catch (e) {
-        debugPrint('Error playing accept2.mp3: $e');
+    final bool isToday = widget.event.startTime.year == now.year &&
+                         widget.event.startTime.month == now.month &&
+                         widget.event.startTime.day == now.day;
+    if (mounted) Navigator.pop(context);
+    if (!context.mounted) return;
+    final bool gameEnabled = dataProvider.gamificationEnabled;
+    final bool notMuted = !dataProvider.muteRingtone;
+    if (gameEnabled) {
+      if (isToday && !rankChanged) {
+        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'missed');
+      } else if (!isToday && !rankChanged) {
+        if (notMuted) {
+          GamificationPopupService.audioPlayer
+              .stop()
+              .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
+        }
+      } else if (isToday && rankChanged) {
+        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'missed');
+        if (context.mounted) {
+          await StreakTierPopupService.showTierChange(
+            context,
+            oldTier: oldTier,
+            newTier: newTier,
+            muteRingtone: dataProvider.muteRingtone,
+            streakCount: dataProvider.streakCount,
+          );
+        }
+      } else {
+        if (context.mounted) {
+          await StreakTierPopupService.showTierChange(
+            context,
+            oldTier: oldTier,
+            newTier: newTier,
+            muteRingtone: dataProvider.muteRingtone,
+            streakCount: dataProvider.streakCount,
+          );
+        }
+      }
+    } else {
+      if (!rankChanged) {
+        if (notMuted) {
+          GamificationPopupService.audioPlayer
+              .stop()
+              .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
+        }
+      } else {
+        if (context.mounted) {
+          await StreakTierPopupService.showTierChange(
+            context,
+            oldTier: oldTier,
+            newTier: newTier,
+            muteRingtone: dataProvider.muteRingtone,
+            streakCount: dataProvider.streakCount,
+          );
+        }
       }
     }
-    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _markEventAsCancelled(BuildContext context) async {
@@ -1462,39 +1557,72 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
     widget.event.isCancelled = true;
     dataProvider.updateEvent(widget.event);
     final now = DateTime.now();
-    final isToday = widget.event.startTime.year == now.year &&
-                    widget.event.startTime.month == now.month &&
-                    widget.event.startTime.day == now.day;
-    if (isToday) {
-      await GamificationPopupService.showEventStatusPopup(
-        context, widget.event.title, 'cancelled',
-      );
-    } else if (!dataProvider.muteRingtone) {
-      try {
-        await _soundPlayer.stop();
-        await _soundPlayer.play(AssetSource('accept2.mp3'));
-      } catch (e) {
-        debugPrint('Error playing accept2.mp3: $e');
-      }
-    }
+    final bool isToday = widget.event.startTime.year == now.year &&
+                         widget.event.startTime.month == now.month &&
+                         widget.event.startTime.day == now.day;
     if (mounted) Navigator.pop(context);
+    if (!context.mounted) return;
+    final bool gameEnabled = dataProvider.gamificationEnabled;
+    final bool notMuted = !dataProvider.muteRingtone;
+    if (gameEnabled && isToday) {
+      await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'cancelled');
+    } else if (notMuted) {
+      GamificationPopupService.audioPlayer
+          .stop()
+          .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
+    }
   }
 
   Future<void> _clearEventStatus(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    
-    widget.event.isCompleted = false;
-    widget.event.isMissed = false;
-    widget.event.isCancelled = false;
-    dataProvider.updateEvent(widget.event);
-    
-    Navigator.pop(context);
-    
-    AppTheme.showTopNotification(
-      context,
-      'Event status cleared.',
-      type: NotificationType.info,
-    );
+
+    // Reverse streak effect of the previous status (non-class events only)
+    if (!_isClassEvent) {
+      final oldTier = StreakService.getTierIndex(dataProvider.streakCount);
+      if (widget.event.isCompleted) {
+        // Revert the +1 earned for completion (no penalty, just undo)
+        dataProvider.softDecrementStreak();
+      } else if (widget.event.isMissed) {
+        // Revert the −5 penalty that was applied when missed
+        dataProvider.reverseMissedPenalty();
+      }
+      final newTier = StreakService.getTierIndex(dataProvider.streakCount);
+
+      widget.event.isCompleted = false;
+      widget.event.isMissed = false;
+      widget.event.isCancelled = false;
+      dataProvider.updateEvent(widget.event);
+
+      Navigator.pop(context);
+      AppTheme.showTopNotification(
+        context,
+        'Event status cleared.',
+        type: NotificationType.info,
+      );
+
+      // Show planet rank popup if rank changed
+      if (newTier != oldTier && context.mounted) {
+        await StreakTierPopupService.showTierChange(
+          context,
+          oldTier: oldTier,
+          newTier: newTier,
+          muteRingtone: dataProvider.muteRingtone,
+          streakCount: dataProvider.streakCount,
+        );
+      }
+    } else {
+      widget.event.isCompleted = false;
+      widget.event.isMissed = false;
+      widget.event.isCancelled = false;
+      dataProvider.updateEvent(widget.event);
+
+      Navigator.pop(context);
+      AppTheme.showTopNotification(
+        context,
+        'Event status cleared.',
+        type: NotificationType.info,
+      );
+    }
   }
 
   String _getAttendanceLabel(AttendanceStatus status) {
