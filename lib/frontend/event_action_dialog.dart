@@ -1418,27 +1418,27 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
     final bool isToday = widget.event.startTime.year == now.year &&
                          widget.event.startTime.month == now.month &&
                          widget.event.startTime.day == now.day;
+    // Capture the Navigator's own context — it outlives this dialog and
+    // remains mounted even after we pop, so subsequent showDialog calls work.
+    final navContext = Navigator.of(context).context;
     if (mounted) Navigator.pop(context);
-    if (!context.mounted) return;
+    if (!navContext.mounted) return;
     final bool gameEnabled = dataProvider.gamificationEnabled;
     final bool notMuted = !dataProvider.muteRingtone;
     if (gameEnabled) {
       if (isToday && !rankChanged) {
-        // game popup + accept2 (popup handles sound internally)
-        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'completed');
+        await GamificationPopupService.showEventStatusPopup(navContext, widget.event.title, 'completed');
       } else if (!isToday && !rankChanged) {
-        // no popup, just accept2
         if (notMuted) {
           GamificationPopupService.audioPlayer
               .stop()
               .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
         }
       } else if (isToday && rankChanged) {
-        // game popup + accept2, then planet popup + win.mp3
-        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'completed');
-        if (context.mounted) {
+        await GamificationPopupService.showEventStatusPopup(navContext, widget.event.title, 'completed');
+        if (navContext.mounted) {
           await StreakTierPopupService.showTierChange(
-            context,
+            navContext,
             oldTier: oldTier,
             newTier: newTier,
             muteRingtone: dataProvider.muteRingtone,
@@ -1446,10 +1446,9 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
           );
         }
       } else {
-        // other day + rank changed: only planet popup + win.mp3
-        if (context.mounted) {
+        if (navContext.mounted) {
           await StreakTierPopupService.showTierChange(
-            context,
+            navContext,
             oldTier: oldTier,
             newTier: newTier,
             muteRingtone: dataProvider.muteRingtone,
@@ -1459,17 +1458,15 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
       }
     } else {
       if (!rankChanged) {
-        // just accept2 (all days)
         if (notMuted) {
           GamificationPopupService.audioPlayer
               .stop()
               .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
         }
       } else {
-        // planet popup + win.mp3 (all days)
-        if (context.mounted) {
+        if (navContext.mounted) {
           await StreakTierPopupService.showTierChange(
-            context,
+            navContext,
             oldTier: oldTier,
             newTier: newTier,
             muteRingtone: dataProvider.muteRingtone,
@@ -1494,13 +1491,14 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
     final bool isToday = widget.event.startTime.year == now.year &&
                          widget.event.startTime.month == now.month &&
                          widget.event.startTime.day == now.day;
+    final navContext = Navigator.of(context).context;
     if (mounted) Navigator.pop(context);
-    if (!context.mounted) return;
+    if (!navContext.mounted) return;
     final bool gameEnabled = dataProvider.gamificationEnabled;
     final bool notMuted = !dataProvider.muteRingtone;
     if (gameEnabled) {
       if (isToday && !rankChanged) {
-        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'missed');
+        await GamificationPopupService.showEventStatusPopup(navContext, widget.event.title, 'missed');
       } else if (!isToday && !rankChanged) {
         if (notMuted) {
           GamificationPopupService.audioPlayer
@@ -1508,10 +1506,10 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
               .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
         }
       } else if (isToday && rankChanged) {
-        await GamificationPopupService.showEventStatusPopup(context, widget.event.title, 'missed');
-        if (context.mounted) {
+        await GamificationPopupService.showEventStatusPopup(navContext, widget.event.title, 'missed');
+        if (navContext.mounted) {
           await StreakTierPopupService.showTierChange(
-            context,
+            navContext,
             oldTier: oldTier,
             newTier: newTier,
             muteRingtone: dataProvider.muteRingtone,
@@ -1519,9 +1517,9 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
           );
         }
       } else {
-        if (context.mounted) {
+        if (navContext.mounted) {
           await StreakTierPopupService.showTierChange(
-            context,
+            navContext,
             oldTier: oldTier,
             newTier: newTier,
             muteRingtone: dataProvider.muteRingtone,
@@ -1537,9 +1535,9 @@ Widget _buildClassActions(BuildContext context, Color color, Event event) {
               .then((_) => GamificationPopupService.audioPlayer.play(AssetSource('accept2.mp3')));
         }
       } else {
-        if (context.mounted) {
+        if (navContext.mounted) {
           await StreakTierPopupService.showTierChange(
-            context,
+            navContext,
             oldTier: oldTier,
             newTier: newTier,
             muteRingtone: dataProvider.muteRingtone,

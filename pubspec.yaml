@@ -36,7 +36,7 @@ flutter:
     - assets/startup.mp3
     - assets/accept1.mp3
     - assets/accept2.mp3
-    - assets/win.mp3
+    - assets/victory.mp3
     - assets/lose.mp3
 
 flutter_icons:

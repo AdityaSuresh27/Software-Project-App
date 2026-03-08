@@ -26,7 +26,7 @@
 ///   used as the profile avatar border/background ring.
 ///
 ///  SOUNDS 
-///   Rank-up    assets/win.mp3   (respects muteRingtone)
+///   Rank-up    assets/victory.mp3   (respects muteRingtone)
 ///   Rank-down  assets/lose.mp3
 
 import 'dart:async';
@@ -370,7 +370,7 @@ class StreakTierPopupService {
         // Stop any lingering gamification popup sound first so there's no conflict
         await GamificationPopupService.stopAudio();
         await _player.stop();
-        await _player.play(AssetSource(rankUp ? 'win.mp3' : 'lose.mp3'));
+        await _player.play(AssetSource(rankUp ? 'victory.mp3' : 'lose.mp3'));
       } catch (e) {
         debugPrint('StreakTierPopup sound error: $e');
       }
