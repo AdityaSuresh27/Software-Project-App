@@ -209,7 +209,7 @@ class _EventActionDialogState extends State<EventActionDialog> {
                               context,
                               icon: Icons.category,
                               label: 'Category',
-                              value: event.category!,
+                              value: Provider.of<DataProvider>(context, listen: false).getCategoryById(event.category)?.name ?? event.category!,
                               color: color,
                             ),
                             const SizedBox(height: 12),
