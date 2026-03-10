@@ -224,6 +224,70 @@ class _AttendancePredictorPageState extends State<AttendancePredictorPage> {
     _showSelectCoursesDialog(dataProvider, courseNames.toList(), isInitial: false);
   }
 
+  void _showHelpDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('How It Works'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Current Attendance',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Shows your actual attendance including all classes marked so far (past, present, and future).',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Predicted Attendance',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Shows what your attendance will be if you take the selected leave dates. Only unmarked future classes are affected by leave selection.',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: Colors.orange[700]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Marked classes will NOT be changed. Leave selection only affects unmarked classes.',
+                        style: TextStyle(fontSize: 11, color: Colors.orange[900]),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got It'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showCoursePreSelectionDialog() {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     final courseNames = <String>{};
@@ -364,6 +428,14 @@ class _AttendancePredictorPageState extends State<AttendancePredictorPage> {
             title: const Text('Attendance Predictor'),
             elevation: 0,
             actions: [
+              // Help/Info Button
+              Tooltip(
+                message: 'How it works',
+                child: IconButton(
+                  icon: const Icon(Icons.help_outline),
+                  onPressed: () => _showHelpDialog(context),
+                ),
+              ),
               if (_selectedCourses.isNotEmpty)
                 Tooltip(
                   message: 'Add course',
@@ -374,15 +446,16 @@ class _AttendancePredictorPageState extends State<AttendancePredictorPage> {
                 ),
             ],
           ),
-          body: Column(
-            children: [
-              // Toggle Switch
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.successGreen.withValues(alpha: 0.1),
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Toggle Switch
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.successGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: AppTheme.successGreen.withValues(alpha: 0.3),
@@ -493,55 +566,56 @@ class _AttendancePredictorPageState extends State<AttendancePredictorPage> {
               const Divider(height: 1),
 
               // Course Predictions
-              Expanded(
-                child: _selectedCourses.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.calendar_view_month,
-                              size: 64,
-                              color: Colors.grey.withValues(alpha: 0.3),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No courses selected',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 24),
-                            FilledButton.icon(
-                              onPressed: () => _addCourse(dataProvider),
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add Course'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            ..._selectedCourses.entries.map((entry) {
-                              final courseName = entry.key;
-                              final color = entry.value;
-                              final prediction = _calculatePredictedAttendance(courseName, dataProvider);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _buildCourseCard(
-                                  courseName,
-                                  color,
-                                  prediction,
-                                  dataProvider,
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                        ),
+              _selectedCourses.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_view_month,
+                            size: 64,
+                            color: Colors.grey.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No courses selected',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 24),
+                          FilledButton.icon(
+                            onPressed: () => _addCourse(dataProvider),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add Course'),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
                       ),
-              ),
-            ],
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          ..._selectedCourses.entries.map((entry) {
+                            final courseName = entry.key;
+                            final color = entry.value;
+                            final prediction = _calculatePredictedAttendance(courseName, dataProvider);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildCourseCard(
+                                courseName,
+                                color,
+                                prediction,
+                                dataProvider,
+                              ),
+                            );
+                          }).toList(),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
+              ],
+            ),
           ),
         );
       },
