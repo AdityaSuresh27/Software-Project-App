@@ -58,7 +58,6 @@ class _AddEventDialogState extends State<AddEventDialog>
   String _selectedClassification = 'class';
   String? _selectedCategory;
   String _selectedPriority = 'medium';
-  String _estimatedDuration = '1h';
   DateTime? _startTime;
   DateTime? _endTime;
   bool _isCompleted = false;
@@ -78,16 +77,6 @@ class _AddEventDialogState extends State<AddEventDialog>
   ];
 
   final List<String> _priorities = ['low', 'medium', 'high', 'critical'];
-  final List<String> _durations = [
-    '15m',
-    '30m',
-    '1h',
-    '2h',
-    '3h',
-    '4h',
-    '6h',
-    '8h'
-  ];
 
   @override
   void initState() {
@@ -116,7 +105,6 @@ class _AddEventDialogState extends State<AddEventDialog>
       _selectedClassification = widget.editEvent!.classification;
       _selectedCategory = widget.editEvent!.category;
       _selectedPriority = widget.editEvent!.priority;
-      _estimatedDuration = widget.editEvent!.estimatedDuration ?? '1h';
       _startTime = widget.editEvent!.startTime;
       _endTime = widget.editEvent!.endTime ?? widget.editEvent!.startTime.add(const Duration(hours: 1));
       _isCompleted = widget.editEvent!.isCompleted;
@@ -770,18 +758,6 @@ AppPopupMenuButton<String?>(
               ),
             ),
             const SizedBox(height: 16),
-
-            if (false) ...[  // estimated duration removed
-AppDropdown<String>(
-  value: _estimatedDuration,
-  label: 'Estimated Duration',
-  prefixIcon: Icons.timer_outlined,
-  accentColor: color,
-  items: _durations.map((d) => AppDropdownItem(value: d, label: d)).toList(),
-  onChanged: (value) => setState(() => _estimatedDuration = value!),
-),
-              const SizedBox(height: 20),
-            ],
 
             TextFormField(
               controller: _locationController,
