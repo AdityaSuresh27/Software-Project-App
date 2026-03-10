@@ -118,7 +118,7 @@ class _AddEventDialogState extends State<AddEventDialog>
       _selectedPriority = widget.editEvent!.priority;
       _estimatedDuration = widget.editEvent!.estimatedDuration ?? '1h';
       _startTime = widget.editEvent!.startTime;
-      _endTime = widget.editEvent!.endTime;
+      _endTime = widget.editEvent!.endTime ?? widget.editEvent!.startTime.add(const Duration(hours: 1));
       _isCompleted = widget.editEvent!.isCompleted;
       _isImportant = widget.editEvent!.isImportant;
       _voiceNotes = List.from(widget.editEvent!.voiceNotes);
@@ -341,14 +341,13 @@ void _saveEvent() async {
     widget.editEvent!.classification = _selectedClassification;
     widget.editEvent!.category = _selectedCategory;
     widget.editEvent!.startTime = _startTime!;
-    widget.editEvent!.endTime = _isTaskType ? null : _endTime;
+    widget.editEvent!.endTime = _endTime;
     widget.editEvent!.location =
         _locationController.text.isEmpty ? null : _locationController.text;
     widget.editEvent!.notes =
         _notesController.text.isEmpty ? null : _notesController.text;
     widget.editEvent!.priority = _selectedPriority;
-    widget.editEvent!.estimatedDuration =
-        _isTaskType ? _estimatedDuration : null;
+    widget.editEvent!.estimatedDuration = null;
     widget.editEvent!.isImportant = _isImportant;
     widget.editEvent!.voiceNotes = _voiceNotes;
     widget.editEvent!.reminders = _reminders;
@@ -384,14 +383,14 @@ void _saveEvent() async {
         classification: _selectedClassification,
         category: _selectedCategory,
         startTime: _startTime!,
-        endTime: _isTaskType ? null : _endTime,
+        endTime: _endTime,
         location: _locationController.text.isEmpty
             ? null
             : _locationController.text,
         notes:
             _notesController.text.isEmpty ? null : _notesController.text,
         priority: _selectedPriority,
-        estimatedDuration: _isTaskType ? _estimatedDuration : null,
+        estimatedDuration: null,
       isCompleted: _isCompleted,
       isImportant: _isImportant,
       voiceNotes: _voiceNotes,
@@ -747,7 +746,7 @@ AppPopupMenuButton<String?>(
                 borderRadius: BorderRadius.circular(16),
                 child: InputDecorator(
                   decoration: _buildInputDecoration(
-                    _isTaskType ? 'Due Date/Time' : 'Start Date/Time',
+                    'Start Date/Time',
                     Icons.event,
                   ),
                   child: Text(
@@ -758,23 +757,21 @@ AppPopupMenuButton<String?>(
               ),
             const SizedBox(height: 20),
 
-            if (!_isTaskType) ...[
-              InkWell(
-                onTap: () => _selectDateTime(false),
-                borderRadius: BorderRadius.circular(16),
-                child: InputDecorator(
-                  decoration: _buildInputDecoration(
-                      'End Date/Time', Icons.event_available),
-                  child: Text(
-                    DateFormat('EEE, MMM d, y • h:mm a').format(_endTime!),
-                    style: const TextStyle(fontSize: 16),
-                  ),
+            InkWell(
+              onTap: () => _selectDateTime(false),
+              borderRadius: BorderRadius.circular(16),
+              child: InputDecorator(
+                decoration: _buildInputDecoration(
+                    'End Date/Time', Icons.event_available),
+                child: Text(
+                  DateFormat('EEE, MMM d, y • h:mm a').format(_endTime!),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
-              const SizedBox(height: 16)
-            ],
+            ),
+            const SizedBox(height: 16),
 
-            if (_isTaskType) ...[
+            if (false) ...[  // estimated duration removed
 AppDropdown<String>(
   value: _estimatedDuration,
   label: 'Estimated Duration',
