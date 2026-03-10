@@ -34,8 +34,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       color: Color(0xFF2563EB),
     ),
     OnboardingPage(
-      title: 'Smart Organization',
-      description: 'Categorize events by subject, set priorities, and track progress with powerful filtering tools.',
+      title: 'Smart Organisation',
+      description: 'Categorise events by subject, set priorities, and track progress with powerful filtering tools.',
       icon: Icons.folder_outlined,
       color: Color(0xFF14B8A6),
     ),

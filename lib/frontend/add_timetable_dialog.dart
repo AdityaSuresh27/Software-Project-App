@@ -663,7 +663,7 @@ AppPopupMenuButton<String?>(
 
                       // Color picker
                       Text(
-                        'Color',
+                        'Colour',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,

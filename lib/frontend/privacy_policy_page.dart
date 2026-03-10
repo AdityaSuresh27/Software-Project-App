@@ -139,7 +139,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   context,
                   '3',
                   'How We Use Your Information',
-                  'We use your data to provide our scheduling features, analyze task patterns to help prevent burnout, and generate AI-powered study plans.',
+                  'We use your data to provide our scheduling features, analyse task patterns to help prevent burnout, and generate AI-powered study plans.',
                   Icons.data_usage_rounded,
                   AppTheme.meetingTeal,
                 ),
@@ -150,7 +150,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   context,
                   '5',
                   'Data Security',
-                  'We implement security measures to protect your information from unauthorized access. However, no internet transmission method is 100% secure.',
+                  'We implement security measures to protect your information from unauthorised access. However, no internet transmission method is 100% secure.',
                   Icons.security_rounded,
                   AppTheme.successGreen,
                   isImportant: true,
@@ -557,7 +557,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'We use Google Gemini AI to create personalized study plans. When you request a study plan, your task data is sent to Google\'s servers. Google does not use this data to train their models.',
+                  'We use Google Gemini AI to create personalised study plans. When you request a study plan, your task data is sent to Google\'s servers. Google does not use this data to train their models.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         height: 1.6,
                         fontSize: 15.5,

@@ -132,7 +132,7 @@ class _GetStartedPageState extends State<GetStartedPage>
                     child: Column(
                       children: [
                         _Typewriter(
-                          text: 'Ready to Organize?',
+                          text: 'Ready to Organise?',
                           style: GoogleFonts.spaceGrotesk(
                               fontSize: 42, fontWeight: FontWeight.w900,
                               color: Colors.white, height: 1.15, letterSpacing: 0.4),
@@ -140,7 +140,7 @@ class _GetStartedPageState extends State<GetStartedPage>
                         ),
                           const SizedBox(height: 16),
                           Text(
-                            'Choose how you want to get started.\nYour academic command center awaits.',
+                            'Choose how you want to get started.\nYour academic command centre awaits.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.dmSans(
                               fontSize: 16, color: Colors.white.withValues(alpha: 0.62),

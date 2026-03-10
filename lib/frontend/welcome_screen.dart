@@ -38,7 +38,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _Feature('01', 'Unified Event System',
         'Classes, exams, deadlines and assignments — all managed in one clean, intelligent view.',
         Icons.event_note_rounded, Color(0xFF00D9FF)),
-    _Feature('02', 'Smart Organization',
+    _Feature('02', 'Smart Organisation',
         'Powerful filtering by subject, priority, and date. Always know what matters most right now.',
         Icons.layers_rounded, Color(0xFF06D6D6)),
     _Feature('03', 'Attendance Tracking',
@@ -301,7 +301,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               child: _subtitleFade.value > 0.05
                   ? _Typewriter(
                       key: const ValueKey('sub'),
-                      text: 'Your academic journey,\nbeautifully organized.',
+                      text: 'Your academic journey,\nbeautifully organised.',
                       duration: const Duration(milliseconds: 3600),
                       style: GoogleFonts.dmSans(
                         fontSize: 19,

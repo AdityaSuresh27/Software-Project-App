@@ -84,6 +84,19 @@ class ClassFlowApp extends StatelessWidget {
             themeMode: ThemeMode.light, // always use the single space theme
             home: const SplashScreen(),
             navigatorKey: navigatorKey,
+            builder: (context, child) {
+              final mq = MediaQuery.of(context);
+              final rawScale = mq.textScaler.scale(1.0);
+              final clampedScale = rawScale > 1.2 ? 1.2 : rawScale;
+              return MediaQuery(
+                data: mq.copyWith(
+                  textScaler: clampedScale == rawScale
+                      ? mq.textScaler
+                      : TextScaler.linear(clampedScale),
+                ),
+                child: child!,
+              );
+            },
           );
         }
 
@@ -109,6 +122,19 @@ class ClassFlowApp extends StatelessWidget {
           themeMode: themeProvider.themeMode,
           home: const SplashScreen(),
           navigatorKey: navigatorKey,
+          builder: (context, child) {
+            final mq = MediaQuery.of(context);
+            final rawScale = mq.textScaler.scale(1.0);
+            final clampedScale = rawScale > 1.2 ? 1.2 : rawScale;
+            return MediaQuery(
+              data: mq.copyWith(
+                textScaler: clampedScale == rawScale
+                    ? mq.textScaler
+                    : TextScaler.linear(clampedScale),
+              ),
+              child: child!,
+            );
+          },
         );
       },
     );
