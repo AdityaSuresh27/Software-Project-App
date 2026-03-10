@@ -22,6 +22,7 @@ import 'space_background.dart';
 import 'main_navigation.dart';
 import '../backend/data_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
+import '../backend/notification_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -86,6 +87,11 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _setupAnimations();
     _startSequence();
+    // Request notification permission after the first frame when the
+    // Android Activity is fully attached and can show the permission dialog.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService().requestPermission();
+    });
   }
 
   void _setupAnimations() {

@@ -88,6 +88,10 @@ class DataProvider extends ChangeNotifier {
 DataProvider() {
     // Load data and check auth in parallel, complete ready future after both finish
     Future.wait([_loadData(), _checkAuthStatus()]).then((_) {
+      // Re-schedule notifications for all existing events after data + settings
+      // are loaded. Timers are in-memory only and lost when the app restarts,
+      // so this ensures every future event gets a fresh timer + alarm.
+      _rescheduleAllNotifications();
       if (!_readyCompleter.isCompleted) _readyCompleter.complete();
     });
   }
@@ -655,6 +659,15 @@ Future<void> _checkAuthStatus() async {
   void _scheduleEventNotifications(Event event) {
     if (_notifyReminders) _scheduleReminderNotifications(event);
     if (_notifyEventStart) _scheduleEventStartNotification(event);
+  }
+
+  /// Re-schedules notifications for every existing event.
+  /// Called on app startup after data is loaded from SharedPreferences,
+  /// because in-memory Dart Timers are lost when the app process dies.
+  void _rescheduleAllNotifications() {
+    for (final event in _events) {
+      _scheduleEventNotifications(event);
+    }
   }
 
   void _cancelEventNotifications(String eventId) {

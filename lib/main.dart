@@ -41,11 +41,9 @@ import 'frontend/theme.dart';
 import 'frontend/theme_provider.dart';
 import 'frontend/font_provider.dart';
 import 'backend/data_provider.dart';
-import 'backend/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService().initialize();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
