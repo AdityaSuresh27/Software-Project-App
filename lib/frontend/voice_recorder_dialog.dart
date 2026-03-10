@@ -297,7 +297,12 @@ class _VoiceRecorderDialogState extends State<VoiceRecorderDialog> {
                       child: OutlinedButton.icon(
                         onPressed: _isPaused ? _resumeRecording : _pauseRecording,
                         icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
-                        label: Text(_isPaused ? 'Resume' : 'Pause'),
+                        label: Text(
+                          _isPaused ? 'Resume' : 'Pause',
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
