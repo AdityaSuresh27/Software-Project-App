@@ -33,6 +33,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'gamification_popup.dart';
 import 'theme.dart';
 
@@ -370,7 +371,9 @@ class StreakTierPopupService {
         // Stop any lingering gamification popup sound first so there's no conflict
         await GamificationPopupService.stopAudio();
         await _player.stop();
-        await _player.play(AssetSource(rankUp ? 'victory.mp3' : 'lose.mp3'));
+        final assetPath = rankUp ? 'assets/victory.mp3' : 'assets/lose.mp3';
+        final bytes = await rootBundle.load(assetPath);
+        await _player.play(BytesSource(bytes.buffer.asUint8List()));
       } catch (e) {
         debugPrint('StreakTierPopup sound error: $e');
       }
